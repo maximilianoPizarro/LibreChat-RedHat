@@ -1,4 +1,4 @@
-schemaVersion: 2.2.0
+schemaVersion: 2.3.0
 metadata:
   name: redhat-chat
   displayName: Red Hat Chat
@@ -14,7 +14,6 @@ metadata:
   attributes:
     tech-preview: "true"
 components:
-  # Main API container - runs from source code
   - name: api
     container:
       image: registry.access.redhat.com/ubi8/nodejs-20:latest
@@ -56,7 +55,6 @@ components:
         - name: logs-data
           path: /app/api/logs
       sourceMapping: /
-  # MongoDB container
   - name: mongodb
     container:
       image: mongo:latest
@@ -72,7 +70,6 @@ components:
       volumeMounts:
         - name: mongodb-data
           path: /data/db
-  # Meilisearch container
   - name: meilisearch
     container:
       image: getmeili/meilisearch:v1.12.3
@@ -92,7 +89,6 @@ components:
       volumeMounts:
         - name: meili-data
           path: /meili_data
-  # VectorDB (PostgreSQL with pgvector) container
   - name: vectordb
     container:
       image: pgvector/pgvector:0.8.0-pg15-trixie
@@ -112,7 +108,6 @@ components:
       volumeMounts:
         - name: pg-data
           path: /var/lib/postgresql/data
-  # RAG API container (optional)
   - name: rag-api
     container:
       image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
@@ -129,7 +124,6 @@ components:
           value: "8000"
         - name: OPENAI_API_KEY
           value: ""
-  # Ephemeral volumes (automatically created when mounted)
   - name: images-data
     volume:
       size: 1Gi
@@ -152,15 +146,11 @@ commands:
   - id: init
     exec:
       component: api
-      commandLine: |
-        echo "Initializing Red Hat Chat workspace..."
-        npm install
+      commandLine: echo "Initializing Red Hat Chat workspace..." && npm install
   - id: build
     exec:
       component: api
-      commandLine: |
-        npm run build:packages
-        npm run build:client
+      commandLine: npm run build:packages && npm run build:client
   - id: run
     exec:
       component: api
@@ -168,8 +158,7 @@ commands:
   - id: start
     exec:
       component: api
-      commandLine: |
-        npm install && npm run backend:dev
+      commandLine: npm install && npm run backend:dev
 events:
   postStart:
     - start
