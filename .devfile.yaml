@@ -98,7 +98,8 @@ components:
   - name: vectordb
     container:
       image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
-      memoryLimit: 512Mi
+      memoryLimit: 1Gi
+      cpuLimit: 500m
       endpoints:
         - name: postgres
           targetPort: 5432
