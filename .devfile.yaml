@@ -55,6 +55,12 @@ components:
         - name: logs-data
           path: /app/api/logs
       sourceMapping: /
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # Keep container running
+          tail -f /dev/null
   - name: mongodb
     container:
       image: mongo:latest
@@ -159,6 +165,18 @@ commands:
     exec:
       component: api
       commandLine: npm install && npm run backend:dev
+  - id: init-workspace
+    exec:
+      component: api
+      commandLine: |
+        echo "Initializing workspace..."
+        if [ -f package.json ]; then
+          npm install || echo "Warning: npm install failed, but continuing..."
+        else
+          echo "Warning: package.json not found, skipping npm install"
+        fi
+        echo "✓ Workspace initialized"
+        echo "Run 'devfile run' to start the backend server"
   - id: deploy-setup
     exec:
       component: api
@@ -271,4 +289,4 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
-    - start
+    - init-workspace
