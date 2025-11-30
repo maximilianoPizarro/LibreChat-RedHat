@@ -55,13 +55,7 @@ components:
           path: /app/uploads
         - name: logs-data
           path: /app/api/logs
-      command:
-        - /bin/bash
-        - -c
-        - |
-          # Install dependencies and start backend in dev mode
-          npm install
-          npm run backend:dev
+      sourceMapping: /
   # MongoDB container
   - name: mongodb
     container:
@@ -137,42 +131,27 @@ components:
           value: ""
 commands:
   - id: init
-    component: api
-    command:
-      - /bin/bash
-      - -c
-      - |
+    exec:
+      component: api
+      commandLine: |
         echo "Initializing Red Hat Chat workspace..."
         npm install
   - id: build
-    component: api
-    command:
-      - /bin/bash
-      - -c
-      - |
+    exec:
+      component: api
+      commandLine: |
         npm run build:packages
         npm run build:client
   - id: run
-    component: api
-    command:
-      - /bin/bash
-      - -c
-      - |
-        npm run backend:dev
+    exec:
+      component: api
+      commandLine: npm run backend:dev
+  - id: start
+    exec:
+      component: api
+      commandLine: |
+        npm install && npm run backend:dev
 events:
   postStart:
-    - init
-volumes:
-  - name: images-data
-    ephemeral: true
-  - name: uploads-data
-    ephemeral: true
-  - name: logs-data
-    ephemeral: true
-  - name: mongodb-data
-    ephemeral: true
-  - name: meili-data
-    ephemeral: true
-  - name: pg-data
-    ephemeral: true
+    - start
 
