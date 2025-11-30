@@ -12,6 +12,43 @@ meili_data*
 librechat*
 Dockerfile*
 docs
+*.md
+*.txt
+.env
+.env.*
+!.env.example*
+
+# Build artifacts and caches
+**/dist
+**/build
+**/.next
+**/.cache
+**/coverage
+**/.nyc_output
+**/logs
+**/*.log
+
+# Test files
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+**/__tests__
+**/test
+**/tests
+**/e2e
+
+# Development files
+**/.eslintrc*
+**/.prettierrc*
+**/jest.config.*
+**/playwright.config.*
+**/.github
+**/.devcontainer
+
+# OpenShift/Kubernetes manifests
+manifests/
+.tekton/
 
 # Ignore all hidden files
-.*
+

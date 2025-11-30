@@ -1,0 +1,178 @@
+schemaVersion: 2.2.0
+metadata:
+  name: redhat-chat
+  displayName: Red Hat Chat
+  description: Red Hat Chat - Tech Preview with LibreChat and Red Hat Design System
+  tags:
+    - nodejs
+    - chat
+    - ai
+    - redhat
+  projectType: nodejs
+  language: typescript
+  version: 0.8.1-rc2
+  attributes:
+    tech-preview: "true"
+components:
+  # Main API container - runs from source code
+  - name: api
+    container:
+      image: registry.access.redhat.com/ubi8/nodejs-20:latest
+      memoryLimit: 2Gi
+      cpuLimit: 1000m
+      cpuRequest: 250m
+      endpoints:
+        - name: http
+          targetPort: 3080
+          exposure: public
+          protocol: http
+          path: /
+      env:
+        - name: NODE_ENV
+          value: development
+        - name: HOST
+          value: 0.0.0.0
+        - name: PORT
+          value: "3080"
+        - name: DOMAIN
+          value: http://localhost:3080
+        - name: MONGO_URI
+          value: mongodb://mongodb:27017/LibreChat
+        - name: MEILI_HOST
+          value: http://meilisearch:7700
+        - name: RAG_API_URL
+          value: http://rag-api:8000
+        - name: RAG_PORT
+          value: "8000"
+        - name: JWT_EXPIRES_IN
+          value: 1d
+        - name: JWT_REFRESH_EXPIRES_IN
+          value: 7d
+      volumeMounts:
+        - name: images-data
+          path: /app/client/public/images
+        - name: uploads-data
+          path: /app/uploads
+        - name: logs-data
+          path: /app/api/logs
+      command:
+        - /bin/bash
+        - -c
+        - |
+          # Install dependencies and start backend in dev mode
+          npm install
+          npm run backend:dev
+  # MongoDB container
+  - name: mongodb
+    container:
+      image: mongo:latest
+      memoryLimit: 512Mi
+      endpoints:
+        - name: mongodb
+          targetPort: 27017
+          exposure: none
+          protocol: tcp
+      command:
+        - mongod
+        - --noauth
+      volumeMounts:
+        - name: mongodb-data
+          path: /data/db
+  # Meilisearch container
+  - name: meilisearch
+    container:
+      image: getmeili/meilisearch:v1.12.3
+      memoryLimit: 512Mi
+      endpoints:
+        - name: meilisearch
+          targetPort: 7700
+          exposure: none
+          protocol: http
+      env:
+        - name: MEILI_HOST
+          value: http://meilisearch:7700
+        - name: MEILI_NO_ANALYTICS
+          value: "true"
+        - name: MEILI_MASTER_KEY
+          value: change_me_to_a_secure_random_key_minimum_16_characters
+      volumeMounts:
+        - name: meili-data
+          path: /meili_data
+  # VectorDB (PostgreSQL with pgvector) container
+  - name: vectordb
+    container:
+      image: pgvector/pgvector:0.8.0-pg15-trixie
+      memoryLimit: 512Mi
+      endpoints:
+        - name: postgres
+          targetPort: 5432
+          exposure: none
+          protocol: tcp
+      env:
+        - name: POSTGRES_DB
+          value: mydatabase
+        - name: POSTGRES_USER
+          value: myuser
+        - name: POSTGRES_PASSWORD
+          value: mypassword
+      volumeMounts:
+        - name: pg-data
+          path: /var/lib/postgresql/data
+  # RAG API container (optional)
+  - name: rag-api
+    container:
+      image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+      memoryLimit: 1Gi
+      endpoints:
+        - name: rag-api
+          targetPort: 8000
+          exposure: none
+          protocol: http
+      env:
+        - name: DB_HOST
+          value: vectordb
+        - name: RAG_PORT
+          value: "8000"
+        - name: OPENAI_API_KEY
+          value: ""
+commands:
+  - id: init
+    component: api
+    command:
+      - /bin/bash
+      - -c
+      - |
+        echo "Initializing Red Hat Chat workspace..."
+        npm install
+  - id: build
+    component: api
+    command:
+      - /bin/bash
+      - -c
+      - |
+        npm run build:packages
+        npm run build:client
+  - id: run
+    component: api
+    command:
+      - /bin/bash
+      - -c
+      - |
+        npm run backend:dev
+events:
+  postStart:
+    - init
+volumes:
+  - name: images-data
+    ephemeral: true
+  - name: uploads-data
+    ephemeral: true
+  - name: logs-data
+    ephemeral: true
+  - name: mongodb-data
+    ephemeral: true
+  - name: meili-data
+    ephemeral: true
+  - name: pg-data
+    ephemeral: true
+

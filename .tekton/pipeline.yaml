@@ -1,0 +1,74 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: redhat-chat-pipeline
+  labels:
+    app: redhat-chat
+    tech-preview: "true"
+spec:
+  params:
+    - name: git-url
+      description: Git repository URL
+      default: https://github.com/maximilianoPizarro/LibreChat-RedHat
+    - name: git-revision
+      description: Git revision (branch, tag, or commit)
+      default: main
+    - name: image-registry
+      description: Container image registry
+      default: quay.io
+    - name: image-repository
+      description: Container image repository
+      default: maximilianopizarro/redhat-chat
+    - name: image-tag
+      description: Container image tag
+      default: latest
+    - name: namespace
+      description: OpenShift namespace for deployment
+      default: redhat-chat
+  workspaces:
+    - name: source
+      description: Git source code
+    - name: dockerconfig
+      description: Docker config for pushing images
+      optional: true
+  tasks:
+    - name: build
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: $(params.image-registry)/$(params.image-repository):$(params.image-tag)
+        - name: DOCKERFILE
+          value: Dockerfile
+        - name: CONTEXT
+          value: .
+        - name: TLSVERIFY
+          value: "false"
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig
+    - name: deploy
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            oc set image deployment/redhat-chat api=$(params.image-registry)/$(params.image-repository):$(params.image-tag) -n $(params.namespace) || \
+            oc apply -f manifests/base/ -n $(params.namespace)
+            oc rollout status deployment/redhat-chat -n $(params.namespace) --timeout=5m
+      runAfter:
+        - build
+  finally:
+    - name: cleanup
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            echo "Pipeline completed"
+

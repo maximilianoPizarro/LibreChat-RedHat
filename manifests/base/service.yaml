@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redhat-chat
+  labels:
+    app: redhat-chat
+    tech-preview: "true"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3080
+    targetPort: 3080
+    protocol: TCP
+    name: http
+  selector:
+    app: redhat-chat
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  type: ClusterIP
+  ports:
+  - port: 27017
+    targetPort: 27017
+    protocol: TCP
+    name: mongodb
+  selector:
+    app: mongodb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meilisearch
+  labels:
+    app: meilisearch
+spec:
+  type: ClusterIP
+  ports:
+  - port: 7700
+    targetPort: 7700
+    protocol: TCP
+    name: meilisearch
+  selector:
+    app: meilisearch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vectordb
+  labels:
+    app: vectordb
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  selector:
+    app: vectordb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-api
+  labels:
+    app: rag-api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: rag-api
+  selector:
+    app: rag-api
+

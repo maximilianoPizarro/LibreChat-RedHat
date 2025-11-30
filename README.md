@@ -1,10 +1,16 @@
 <p align="center">
-  <a href="https://librechat.ai">
+  <a href="https://www.redhat.com">
     <img src="client/public/assets/logo.svg" height="256">
   </a>
   <h1 align="center">
-    <a href="https://librechat.ai">LibreChat</a>
+    <a href="https://www.redhat.com">Red Hat Chat</a>
   </h1>
+  <p align="center">
+    <img src="https://img.shields.io/badge/Status-Tech--Preview-orange?style=for-the-badge" alt="Tech Preview">
+  </p>
+  <p align="center">
+    <em>Powered by LibreChat with Red Hat Design System</em>
+  </p>
 </p>
 
 <p align="center">
@@ -49,7 +55,7 @@
 
 # ✨ Features
 
-- 🖥️ **UI & Experience** inspired by ChatGPT with enhanced design and features
+- 🖥️ **UI & Experience** powered by [Red Hat Design System](https://ux.redhat.com/) with enhanced design and features
 
 - 🤖 **AI Model Selection**:  
   - Anthropic (Claude), AWS Bedrock, OpenAI, Azure OpenAI, Google, Vertex AI, OpenAI Responses API (incl. Azure)
@@ -126,8 +132,9 @@
   - Built-in Moderation, and Token spend tools
 
 - ⚙️ **Configuration & Deployment**:  
-  - Configure Proxy, Reverse Proxy, Docker, & many Deployment options  
+  - Configure Proxy, Reverse Proxy, Podman/Podman-Compose, & many Deployment options  
   - Use completely local or deploy on the cloud
+  - Built with Red Hat certified container images (UBI8)
 
 - 📖 **Open-Source & Community**:  
   - Completely Open-Source & Built in Public  
@@ -135,11 +142,21 @@
 
 [For a thorough review of our features, see our docs here](https://docs.librechat.ai/) 📚
 
-## 🪶 All-In-One AI Conversations with LibreChat
+## 🪶 All-In-One AI Conversations with Red Hat Chat
 
-LibreChat brings together the future of assistant AIs with the revolutionary technology of OpenAI's ChatGPT. Celebrating the original styling, LibreChat gives you the ability to integrate multiple AI models. It also integrates and enhances original client features such as conversation and message search, prompt templates and plugins.
+Red Hat Chat brings together the future of assistant AIs with the revolutionary technology of OpenAI's ChatGPT, styled with the [Red Hat Design System](https://ux.redhat.com/). This application integrates multiple AI models while maintaining Red Hat's design standards and visual identity. It includes features such as conversation and message search, prompt templates and plugins.
 
-With LibreChat, you no longer need to opt for ChatGPT Plus and can instead use free or pay-per-call APIs. We welcome contributions, cloning, and forking to enhance the capabilities of this advanced chatbot platform.
+With Red Hat Chat, you no longer need to opt for ChatGPT Plus and can instead use free or pay-per-call APIs. Built on Red Hat certified infrastructure using Podman and UBI8 container images.
+
+### 🎨 Red Hat Design System Integration
+
+This application uses the [Red Hat Design System (RHDS)](https://ux.redhat.com/get-started/developers/installation/#npm) for consistent UI components and styling. The frontend is built with:
+
+- **Red Hat Design System Elements** (`@rhds/elements@4.0.0`) - Web components following Red Hat design standards
+- **Red Hat Design Tokens** - CSS variables for colors, spacing, typography, and more
+- **Red Hat Icons** - Consistent iconography across the application
+
+The design system is loaded via CDN (jsDelivr) for development, and can be configured to use the Red Hat CDN for production deployments on `*.redhat.com` domains.
 
 [![Watch the video](https://raw.githubusercontent.com/LibreChat-AI/librechat.ai/main/public/images/changelog/v0.7.6.gif)](https://www.youtube.com/watch?v=ilfwGQtJNlI)
 
@@ -147,16 +164,118 @@ Click on the thumbnail to open the video☝️
 
 ---
 
+## 🚀 Quick Start with Podman
+
+This application is configured to run with Podman and Podman-Compose, using Red Hat certified container images.
+
+### Prerequisites
+
+1. **Install Podman:**
+   ```bash
+   # RHEL/Fedora
+   sudo dnf install podman
+   
+   # Ubuntu/Debian
+   sudo apt-get install podman
+   ```
+
+2. **Install Podman-Compose:**
+   ```bash
+   pip3 install podman-compose
+   ```
+
+3. **Enable Podman socket (for rootless mode):**
+   ```bash
+   systemctl --user enable --now podman.socket
+   export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock
+   ```
+
+### Running the Application
+
+1. **Build and start services:**
+   ```bash
+   npm run start:podman
+   # or directly:
+   podman-compose -f ./podman-compose.yml up -d
+   ```
+
+2. **Stop services:**
+   ```bash
+   npm run stop:podman
+   # or directly:
+   podman-compose -f ./podman-compose.yml down
+   ```
+
+3. **Build container image:**
+   ```bash
+   npm run build:podman
+   # or directly:
+   podman build -t redhat-chat:latest -f Dockerfile .
+   ```
+
+### Container Images
+
+- **Base Image:** `registry.access.redhat.com/ubi8/nodejs-20:latest` (Red Hat UBI8 with Node.js 20)
+- **Container Runtime:** Podman (rootless support)
+- **Compose Tool:** Podman-Compose
+
+### Environment Variables
+
+Create a `.env` file in the root directory with your configuration. See the original LibreChat documentation for required variables.
+
+---
+
+## 🚀 Open in Red Hat Developer Sandbox
+
+You can quickly start developing Red Hat Chat directly in your browser using Red Hat Developer Sandbox (OpenShift DevSpaces).
+
+[![Open in DevSpaces](https://img.shields.io/badge/Open%20in-DevSpaces-blue?style=for-the-badge&logo=openshift)](https://workspaces.openshift.com/f?url=https://github.com/maximilianoPizarro/LibreChat-RedHat)
+
+### Using OpenShift DevSpaces
+
+1. **Click the "Open in DevSpaces" button above** or visit:
+   ```
+   https://workspaces.openshift.com/f?url=https://github.com/maximilianoPizarro/LibreChat-RedHat
+   ```
+
+2. **Sign in** with your Red Hat Developer account (or create one for free)
+
+3. **Wait for the workspace to initialize** - The devfile will automatically:
+   - Start MongoDB, Meilisearch, VectorDB, and RAG API containers
+   - Install dependencies
+   - Start the API in development mode with `npm run backend:dev`
+
+4. **Access the application**:
+   - The API will be available on the exposed endpoint (usually port 3080)
+   - All services are configured to communicate within the workspace network
+
+### DevSpaces Features
+
+- **Ephemeral Storage**: All data is stored in ephemeral volumes (data is lost when workspace stops)
+- **Auto-configured Services**: MongoDB, Meilisearch, VectorDB, and RAG API start automatically
+- **Development Mode**: API runs with hot-reload using `nodemon`
+- **Pre-configured Environment**: All environment variables point to workspace containers
+
+### Notes
+
+- The workspace uses ephemeral storage - data will be lost when the workspace is stopped
+- For persistent data, consider using OpenShift persistent volumes or external databases
+- RAG API requires `OPENAI_API_KEY` to be set in the workspace environment variables
+
+---
+
 ## 🌐 Resources
 
-**GitHub Repo:**
-  - **RAG API:** [github.com/danny-avila/rag_api](https://github.com/danny-avila/rag_api)
-  - **Website:** [github.com/LibreChat-AI/librechat.ai](https://github.com/LibreChat-AI/librechat.ai)
+**Red Hat Resources:**
+  - **Red Hat Design System:** [ux.redhat.com](https://ux.redhat.com/)
+  - **Red Hat UBI:** [developers.redhat.com/products/rhel/ubi](https://developers.redhat.com/products/rhel/ubi)
+  - **Podman:** [podman.io](https://podman.io/)
 
-**Other:**
+**Original LibreChat Resources:**
+  - **GitHub Repo:** [github.com/danny-avila/LibreChat](https://github.com/danny-avila/LibreChat)
+  - **RAG API:** [github.com/danny-avila/rag_api](https://github.com/danny-avila/rag_api)
   - **Website:** [librechat.ai](https://librechat.ai)
   - **Documentation:** [librechat.ai/docs](https://librechat.ai/docs)
-  - **Blog:** [librechat.ai/blog](https://librechat.ai/blog)
 
 ---
 
@@ -194,7 +313,11 @@ Contributions, suggestions, bug reports and fixes are welcome!
 
 For new features, components, or extensions, please open an issue and discuss before sending a PR.
 
-If you'd like to help translate LibreChat into your language, we'd love your contribution! Improving our translations not only makes LibreChat more accessible to users around the world but also enhances the overall user experience. Please check out our [Translation Guide](https://www.librechat.ai/docs/translation).
+If you'd like to help translate Red Hat Chat into your language, we'd love your contribution! Improving our translations not only makes the application more accessible to users around the world but also enhances the overall user experience. Please check out the [Translation Guide](https://www.librechat.ai/docs/translation).
+
+### Red Hat Design System Contributions
+
+When contributing UI components or styling changes, please ensure they follow the [Red Hat Design System guidelines](https://ux.redhat.com/). All components should use RHDS elements and tokens for consistency.
 
 ---
 

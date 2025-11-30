@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+ * Red Hat Design System Integration
+ * 
+ * Red Hat Design System tokens are loaded via CDN in index.html:
+ * <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/css/theme.css">
+ * 
+ * You can use RHDS tokens in your CSS like this:
+ * color: var(--rh-color-text-primary);
+ * background-color: var(--rh-color-surface-base);
+ * 
+ * For production on *.redhat.com domains, use the Red Hat CDN:
+ * https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/theme.css
+ * 
+ * @see https://ux.redhat.com/get-started/developers/installation/#npm
+ */
+
 /* Custom Variables */
 :root {
   --white: #fff;
