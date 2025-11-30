@@ -63,7 +63,7 @@ components:
           tail -f /dev/null
   - name: mongodb
     container:
-      image: mongo:latest
+      image: docker.io/library/mongo:7.0
       memoryLimit: 512Mi
       endpoints:
         - name: mongodb
@@ -78,7 +78,7 @@ components:
           path: /data/db
   - name: meilisearch
     container:
-      image: getmeili/meilisearch:v1.12.3
+      image: docker.io/getmeili/meilisearch:v1.12.3
       memoryLimit: 512Mi
       endpoints:
         - name: meilisearch
@@ -97,7 +97,7 @@ components:
           path: /meili_data
   - name: vectordb
     container:
-      image: pgvector/pgvector:0.8.0-pg15-trixie
+      image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
       memoryLimit: 512Mi
       endpoints:
         - name: postgres
