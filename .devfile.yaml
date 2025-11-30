@@ -129,6 +129,25 @@ components:
           value: "8000"
         - name: OPENAI_API_KEY
           value: ""
+  # Ephemeral volumes (automatically created when mounted)
+  - name: images-data
+    volume:
+      size: 1Gi
+  - name: uploads-data
+    volume:
+      size: 1Gi
+  - name: logs-data
+    volume:
+      size: 500Mi
+  - name: mongodb-data
+    volume:
+      size: 2Gi
+  - name: meili-data
+    volume:
+      size: 1Gi
+  - name: pg-data
+    volume:
+      size: 1Gi
 commands:
   - id: init
     exec:
@@ -154,4 +173,3 @@ commands:
 events:
   postStart:
     - start
-
