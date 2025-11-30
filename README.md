@@ -287,16 +287,16 @@ Once your workspace is running, open a terminal and run:
 
 ```bash
 # Step 1: Setup deployment (creates namespace, secrets, manifests, pipeline)
-devfile deploy:setup
+devfile deploy-setup
 
 # Step 2: Run the pipeline to build and deploy
-devfile deploy:run
+devfile deploy-run
 
 # Step 3: Expose the application
-devfile deploy:expose
+devfile deploy-expose
 
 # Step 4: Check deployment status
-devfile deploy:status
+devfile deploy-status
 ```
 
 ### Step-by-Step Deployment
@@ -310,19 +310,19 @@ This command will:
 - Create the Tekton pipeline
 
 ```bash
-devfile deploy:setup
+devfile deploy-setup
 ```
 
 **Note**: The commands automatically use the current OpenShift project/namespace from your workspace terminal. To use a different namespace, set the environment variable:
 ```bash
 export OPENSHIFT_NAMESPACE=your-namespace
-devfile deploy:setup
+devfile deploy-setup
 ```
 
 Or switch to a different project first:
 ```bash
 oc project your-namespace
-devfile deploy:setup
+devfile deploy-setup
 ```
 
 #### Step 2: Run Pipeline
@@ -330,7 +330,7 @@ devfile deploy:setup
 Execute the Tekton pipeline to build the container image and deploy:
 
 ```bash
-devfile deploy:run
+devfile deploy-run
 ```
 
 This will:
@@ -353,7 +353,7 @@ oc logs -f <pipelinerun-name> -n $OPENSHIFT_NAMESPACE
 Create a Route to expose the application:
 
 ```bash
-devfile deploy:expose
+devfile deploy-expose
 ```
 
 This creates an OpenShift Route that makes the application accessible via HTTP/HTTPS.
@@ -363,7 +363,7 @@ This creates an OpenShift Route that makes the application accessible via HTTP/H
 Verify the deployment:
 
 ```bash
-devfile deploy:status
+devfile deploy-status
 ```
 
 This shows:
@@ -391,11 +391,11 @@ To update with new code:
 1. **Push changes** to your Git repository
 2. **Run the pipeline again**:
    ```bash
-   devfile deploy:run
+   devfile deploy-run
    ```
 3. **Monitor the deployment**:
    ```bash
-   devfile deploy:status
+   devfile deploy-status
    ```
 
 ### Troubleshooting

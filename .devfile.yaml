@@ -159,7 +159,7 @@ commands:
     exec:
       component: api
       commandLine: npm install && npm run backend:dev
-  - id: deploy:setup
+  - id: deploy-setup
     exec:
       component: api
       commandLine: |
@@ -188,7 +188,7 @@ commands:
         echo "✓ Base manifests applied"
         oc apply -f .tekton/pipeline.yaml -n $NAMESPACE
         echo "✓ Pipeline created"
-  - id: deploy:run
+  - id: deploy-run
     exec:
       component: api
       commandLine: |
@@ -233,7 +233,7 @@ commands:
         echo "✓ PipelineRun $PIPELINE_RUN_NAME created"
         echo "Monitor with: oc get pipelineruns -n $NAMESPACE -w"
         echo "View logs: oc logs -f pipelinerun/$PIPELINE_RUN_NAME -n $NAMESPACE"
-  - id: deploy:expose
+  - id: deploy-expose
     exec:
       component: api
       commandLine: |
@@ -249,7 +249,7 @@ commands:
           echo "✓ Route already exists"
         fi
         oc get route redhat-chat -n $NAMESPACE
-  - id: deploy:status
+  - id: deploy-status
     exec:
       component: api
       commandLine: |
