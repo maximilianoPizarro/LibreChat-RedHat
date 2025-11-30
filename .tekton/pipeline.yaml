@@ -13,55 +13,242 @@ spec:
     - name: git-revision
       description: Git revision (branch, tag, or commit)
       default: main
-    - name: image-registry
-      description: Container image registry
-      default: quay.io
-    - name: image-repository
-      description: Container image repository
-      default: maximilianopizarro/redhat-chat
+    - name: image-name
+      description: Image name (without registry)
+      default: redhat-chat
     - name: image-tag
       description: Container image tag
       default: latest
     - name: namespace
       description: OpenShift namespace for deployment
-      default: redhat-chat
+      default: maximilianopizarro5-dev
+    - name: quay-repository
+      description: Quay.io repository (full path)
+      default: maximilianopizarro/redhat-chat
   workspaces:
     - name: source
       description: Git source code
-    - name: dockerconfig
-      description: Docker config for pushing images
-      optional: true
   tasks:
-    - name: build
-      taskRef:
-        name: buildah
-        kind: ClusterTask
-      params:
-        - name: IMAGE
-          value: $(params.image-registry)/$(params.image-repository):$(params.image-tag)
-        - name: DOCKERFILE
-          value: Dockerfile
-        - name: CONTEXT
-          value: .
-        - name: TLSVERIFY
-          value: "false"
-      workspaces:
-        - name: source
-          workspace: source
-        - name: dockerconfig
-          workspace: dockerconfig
-    - name: deploy
+    # Task 1: Create/Update BuildConfig with Docker strategy
+    - name: create-buildconfig
       taskRef:
         name: openshift-client
         kind: ClusterTask
       params:
         - name: SCRIPT
           value: |
-            oc set image deployment/redhat-chat api=$(params.image-registry)/$(params.image-repository):$(params.image-tag) -n $(params.namespace) || \
-            oc apply -f manifests/base/ -n $(params.namespace)
-            oc rollout status deployment/redhat-chat -n $(params.namespace) --timeout=5m
+            set -e
+            NAMESPACE=$(params.namespace)
+            IMAGE_NAME=$(params.image-name)
+            IMAGE_TAG=$(params.image-tag)
+            GIT_URL=$(params.git-url)
+            GIT_REVISION=$(params.git-revision)
+            
+            # Get internal registry URL
+            INTERNAL_REGISTRY=$(oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+            if [ -z "$INTERNAL_REGISTRY" ]; then
+              INTERNAL_REGISTRY="image-registry.openshift-image-registry.svc:5000"
+            fi
+            INTERNAL_IMAGE="${INTERNAL_REGISTRY}/${NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
+            
+            echo "Creating/updating BuildConfig with Docker strategy..."
+            echo "Internal image: ${INTERNAL_IMAGE}"
+            
+            # Create BuildConfig with Docker strategy
+            cat <<EOF | oc apply -f -
+            apiVersion: build.openshift.io/v1
+            kind: BuildConfig
+            metadata:
+              name: ${IMAGE_NAME}
+              namespace: ${NAMESPACE}
+            spec:
+              source:
+                type: Git
+                git:
+                  uri: ${GIT_URL}
+                  ref: ${GIT_REVISION}
+              strategy:
+                type: Docker
+                dockerStrategy:
+                  dockerfilePath: Dockerfile
+              output:
+                to:
+                  kind: ImageStreamTag
+                  name: ${IMAGE_NAME}:${IMAGE_TAG}
+              triggers:
+                - type: ConfigChange
+            EOF
+            
+            # Create ImageStream if it doesn't exist
+            cat <<EOF | oc apply -f -
+            apiVersion: image.openshift.io/v1
+            kind: ImageStream
+            metadata:
+              name: ${IMAGE_NAME}
+              namespace: ${NAMESPACE}
+            spec:
+              lookupPolicy:
+                local: false
+            EOF
+            
+            echo "✓ BuildConfig and ImageStream created/updated"
+    # Task 2: Start build from BuildConfig
+    - name: start-build
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            set -e
+            NAMESPACE=$(params.namespace)
+            IMAGE_NAME=$(params.image-name)
+            IMAGE_TAG=$(params.image-tag)
+            
+            echo "Starting build from BuildConfig..."
+            
+            # Start build
+            BUILD_NAME=$(oc start-build ${IMAGE_NAME} -n ${NAMESPACE} --follow --wait --output=name 2>&1 | grep -oP 'build.build.openshift.io/\K[^ ]+' || echo "")
+            
+            if [ -z "$BUILD_NAME" ]; then
+              echo "Starting new build..."
+              oc start-build ${IMAGE_NAME} -n ${NAMESPACE} --wait
+              BUILD_NAME=$(oc get builds -n ${NAMESPACE} -l buildconfig=${IMAGE_NAME} --sort-by=.metadata.creationTimestamp -o jsonpath='{.items[-1].metadata.name}')
+            fi
+            
+            echo "Build name: ${BUILD_NAME}"
+            
+            # Wait for build to complete
+            echo "Waiting for build to complete..."
+            oc wait --for=condition=Complete build/${BUILD_NAME} -n ${NAMESPACE} --timeout=30m || \
+            oc wait --for=condition=Failed build/${BUILD_NAME} -n ${NAMESPACE} --timeout=30m
+            
+            # Check build status
+            BUILD_STATUS=$(oc get build ${BUILD_NAME} -n ${NAMESPACE} -o jsonpath='{.status.phase}')
+            if [ "$BUILD_STATUS" != "Complete" ]; then
+              echo "Build failed with status: ${BUILD_STATUS}"
+              oc logs build/${BUILD_NAME} -n ${NAMESPACE}
+              exit 1
+            fi
+            
+            echo "✓ Build completed successfully"
       runAfter:
-        - build
+        - create-buildconfig
+    # Task 3: Copy image from internal registry to quay.io using skopeo
+    - name: copy-to-quay
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            set -e
+            NAMESPACE=$(params.namespace)
+            IMAGE_NAME=$(params.image-name)
+            IMAGE_TAG=$(params.image-tag)
+            QUAY_REPO=$(params.quay-repository)
+            
+            echo "Copying image from internal registry to quay.io..."
+            
+            # Get internal registry URL
+            INTERNAL_REGISTRY=$(oc get route default-route -n openshift-image-registry -o jsonpath='{.spec.host}' 2>/dev/null || echo "")
+            if [ -z "$INTERNAL_REGISTRY" ]; then
+              INTERNAL_REGISTRY="image-registry.openshift-image-registry.svc:5000"
+            fi
+            
+            # Get image reference from ImageStream
+            INTERNAL_IMAGE="${INTERNAL_REGISTRY}/${NAMESPACE}/${IMAGE_NAME}:${IMAGE_TAG}"
+            QUAY_IMAGE="quay.io/${QUAY_REPO}:${IMAGE_TAG}"
+            
+            echo "Source: ${INTERNAL_IMAGE}"
+            echo "Destination: ${QUAY_IMAGE}"
+            
+            # Install skopeo if not available
+            if ! command -v skopeo &> /dev/null; then
+              echo "Installing skopeo..."
+              if command -v dnf &> /dev/null; then
+                dnf install -y skopeo || yum install -y skopeo || echo "Warning: Could not install skopeo"
+              elif command -v apt-get &> /dev/null; then
+                apt-get update && apt-get install -y skopeo || echo "Warning: Could not install skopeo"
+              fi
+            fi
+            
+            # Try using oc image mirror first (more reliable in OpenShift)
+            echo "Attempting to copy with oc image mirror..."
+            if oc image mirror ${INTERNAL_IMAGE} ${QUAY_IMAGE} --insecure=false --skip-mount=true 2>/dev/null; then
+              echo "✓ Image copied to quay.io using oc image mirror"
+            elif command -v skopeo &> /dev/null; then
+              echo "Using skopeo to copy image..."
+              # Get service account token for internal registry
+              TOKEN=$(oc create token pipeline -n ${NAMESPACE} --duration=1h 2>/dev/null || echo "")
+              
+              # Copy with skopeo (requires quay.io credentials in environment or docker config)
+              # Note: Quay.io credentials should be in dockerconfig secret or environment
+              if [ -n "$TOKEN" ]; then
+                skopeo copy \
+                  --src-tls-verify=false \
+                  --src-creds="$(oc whoami):${TOKEN}" \
+                  --dest-tls-verify=true \
+                  docker://${INTERNAL_IMAGE} \
+                  docker://${QUAY_IMAGE} || {
+                  echo "Error: Failed to copy image with skopeo"
+                  echo "Note: Ensure quay.io credentials are configured"
+                  exit 1
+                }
+              else
+                # Try without authentication (if registry allows)
+                skopeo copy \
+                  --src-tls-verify=false \
+                  --dest-tls-verify=true \
+                  docker://${INTERNAL_IMAGE} \
+                  docker://${QUAY_IMAGE} || {
+                  echo "Error: Failed to copy image. Check quay.io credentials."
+                  exit 1
+                }
+              fi
+              echo "✓ Image copied to quay.io using skopeo"
+            else
+              echo "Error: Neither oc image mirror nor skopeo available"
+              echo "Please ensure skopeo is installed or use oc image mirror"
+              exit 1
+            fi
+      runAfter:
+        - start-build
+    # Task 4: Apply manifests
+    - name: apply-manifests
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            set -e
+            NAMESPACE=$(params.namespace)
+            QUAY_REPO=$(params.quay-repository)
+            IMAGE_TAG=$(params.image-tag)
+            
+            echo "Applying Kubernetes manifests..."
+            
+            # Update deployment image if it exists, otherwise apply all manifests
+            if oc get deployment redhat-chat -n ${NAMESPACE} &> /dev/null; then
+              echo "Updating existing deployment with new image..."
+              oc set image deployment/redhat-chat api=quay.io/${QUAY_REPO}:${IMAGE_TAG} -n ${NAMESPACE}
+              oc rollout status deployment/redhat-chat -n ${NAMESPACE} --timeout=5m
+            else
+              echo "Applying manifests (deployment doesn't exist yet)..."
+              cd $(workspaces.source.path)/manifests/base
+              oc apply -k . -n ${NAMESPACE}
+              # Update image in deployment
+              oc set image deployment/redhat-chat api=quay.io/${QUAY_REPO}:${IMAGE_TAG} -n ${NAMESPACE} || true
+              oc rollout status deployment/redhat-chat -n ${NAMESPACE} --timeout=5m
+            fi
+            
+            echo "✓ Manifests applied successfully"
+      runAfter:
+        - copy-to-quay
+      workspaces:
+        - name: source
+          workspace: source
   finally:
     - name: cleanup
       taskRef:
@@ -71,4 +258,5 @@ spec:
         - name: SCRIPT
           value: |
             echo "Pipeline completed"
-
+            echo "Deployment status:"
+            oc get deployment redhat-chat -n $(params.namespace) || echo "Deployment not found"

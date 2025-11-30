@@ -264,6 +264,504 @@ You can quickly start developing Red Hat Chat directly in your browser using Red
 
 ---
 
+## 🚀 Deploy to OpenShift from DevSpaces Workspace
+
+Deploy Red Hat Chat directly from your DevSpaces workspace to OpenShift using the Tekton pipeline.
+
+### Prerequisites
+
+- **Open workspace in DevSpaces** (see section above)
+- **OpenShift cluster access** - Your DevSpaces workspace automatically has access to the OpenShift cluster
+- **OpenShift CLI (`oc`)** - Available in DevSpaces workspace by default
+- **Namespace** - Uses the current project/namespace from your workspace terminal (or set `OPENSHIFT_NAMESPACE` env var to override)
+
+**Note**: If `oc` command is not available in your workspace, you can install it manually:
+```bash
+# In workspace terminal
+curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -xz -C /usr/local/bin/ oc
+```
+
+### Quick Deployment from Workspace
+
+Once your workspace is running, open a terminal and run:
+
+```bash
+# Step 1: Setup deployment (creates namespace, secrets, manifests, pipeline)
+devfile deploy:setup
+
+# Step 2: Run the pipeline to build and deploy
+devfile deploy:run
+
+# Step 3: Expose the application
+devfile deploy:expose
+
+# Step 4: Check deployment status
+devfile deploy:status
+```
+
+### Step-by-Step Deployment
+
+#### Step 1: Setup Deployment
+
+This command will:
+- Create the namespace (if it doesn't exist)
+- Generate and create secrets (JWT tokens, Meilisearch key)
+- Apply base Kubernetes manifests
+- Create the Tekton pipeline
+
+```bash
+devfile deploy:setup
+```
+
+**Note**: The commands automatically use the current OpenShift project/namespace from your workspace terminal. To use a different namespace, set the environment variable:
+```bash
+export OPENSHIFT_NAMESPACE=your-namespace
+devfile deploy:setup
+```
+
+Or switch to a different project first:
+```bash
+oc project your-namespace
+devfile deploy:setup
+```
+
+#### Step 2: Run Pipeline
+
+Execute the Tekton pipeline to build the container image and deploy:
+
+```bash
+devfile deploy:run
+```
+
+This will:
+- Create/update a BuildConfig with Docker strategy
+- Build the container image in OpenShift's internal registry
+- Copy the image from internal registry to quay.io using skopeo
+- Apply Kubernetes manifests and deploy the application
+
+**Monitor the pipeline:**
+```bash
+# In the workspace terminal
+oc get pipelineruns -n $OPENSHIFT_NAMESPACE -w
+
+# View specific pipeline logs
+oc logs -f <pipelinerun-name> -n $OPENSHIFT_NAMESPACE
+```
+
+#### Step 3: Expose Application
+
+Create a Route to expose the application:
+
+```bash
+devfile deploy:expose
+```
+
+This creates an OpenShift Route that makes the application accessible via HTTP/HTTPS.
+
+#### Step 4: Check Status
+
+Verify the deployment:
+
+```bash
+devfile deploy:status
+```
+
+This shows:
+- Deployment status
+- Running pods
+- Route URL
+- Pipeline execution status
+
+### Accessing the Application
+
+After deployment, get the application URL:
+
+```bash
+# Get route URL
+oc get route redhat-chat -n $OPENSHIFT_NAMESPACE
+
+# Or open directly in browser (if supported)
+oc get route redhat-chat -n $OPENSHIFT_NAMESPACE -o jsonpath='{.spec.host}' | xargs -I {} echo "https://{}"
+```
+
+### Updating the Application
+
+To update with new code:
+
+1. **Push changes** to your Git repository
+2. **Run the pipeline again**:
+   ```bash
+   devfile deploy:run
+   ```
+3. **Monitor the deployment**:
+   ```bash
+   devfile deploy:status
+   ```
+
+### Troubleshooting
+
+**Check pipeline status:**
+```bash
+oc get pipelineruns -n $OPENSHIFT_NAMESPACE
+oc describe pipelinerun <pipelinerun-name> -n $OPENSHIFT_NAMESPACE
+```
+
+**Check BuildConfig and builds:**
+```bash
+# View BuildConfig
+oc get buildconfig redhat-chat -n $OPENSHIFT_NAMESPACE
+oc describe buildconfig redhat-chat -n $OPENSHIFT_NAMESPACE
+
+# View builds
+oc get builds -n $OPENSHIFT_NAMESPACE -l buildconfig=redhat-chat
+oc logs build/<build-name> -n $OPENSHIFT_NAMESPACE
+
+# Check ImageStream
+oc get imagestream redhat-chat -n $OPENSHIFT_NAMESPACE
+```
+
+**View application logs:**
+```bash
+oc logs -f deployment/redhat-chat -n $OPENSHIFT_NAMESPACE
+```
+
+**Check pod status:**
+```bash
+oc get pods -n $OPENSHIFT_NAMESPACE -l app=redhat-chat
+oc describe pod <pod-name> -n $OPENSHIFT_NAMESPACE
+```
+
+**Verify secrets:**
+```bash
+oc get secrets -n $OPENSHIFT_NAMESPACE | grep redhat-chat
+```
+
+### Manual Commands (Alternative)
+
+If you prefer to run commands manually:
+
+```bash
+# Get current namespace or use default
+NAMESPACE=$(oc project -q || echo "${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}")
+oc project $NAMESPACE || oc create namespace $NAMESPACE
+
+# Create secrets
+JWT_SECRET=$(openssl rand -hex 32)
+JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+MEILI_MASTER_KEY=$(openssl rand -hex 16)
+oc create secret generic redhat-chat-secrets \
+  --from-literal=jwt-secret=$JWT_SECRET \
+  --from-literal=jwt-refresh-secret=$JWT_REFRESH_SECRET \
+  --from-literal=meili-master-key=$MEILI_MASTER_KEY \
+  -n $NAMESPACE
+
+# Apply manifests
+cd manifests/base && oc apply -k . -n $NAMESPACE && cd ../..
+
+# Create pipeline
+oc apply -f .tekton/pipeline.yaml -n $NAMESPACE
+
+# Create and run PipelineRun (see Step 7 in manual section below)
+```
+
+---
+
+## 🖥️ Deploy from Local Machine (Alternative)
+
+If you prefer to deploy from your local machine instead of the DevSpaces workspace, follow these instructions.
+
+### Prerequisites
+
+1. **OpenShift CLI (`oc`) installed**:
+   ```bash
+   # Download from: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/
+   ```
+
+2. **Access to an OpenShift cluster** with:
+   - Tekton Pipelines operator installed
+   - Permissions to create namespaces, deployments, and pipelines
+   - Access to push images to a container registry (e.g., quay.io)
+
+3. **Container Registry credentials** (for pushing images):
+   - Quay.io account or another container registry
+
+### Step 1: Login to OpenShift
+
+```bash
+oc login --server=<your-openshift-server-url>
+```
+
+### Step 2: Create and Switch to Namespace
+
+```bash
+# Create namespace (replace with your namespace)
+export NAMESPACE=maximilianopizarro5-dev
+oc create namespace $NAMESPACE
+oc project $NAMESPACE
+```
+
+### Step 3: Create Secrets
+
+Create secrets for JWT tokens and Meilisearch master key:
+
+```bash
+# Generate secure keys
+JWT_SECRET=$(openssl rand -hex 32)
+JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+MEILI_MASTER_KEY=$(openssl rand -hex 16)
+
+# Create secret
+oc create secret generic redhat-chat-secrets \
+  --from-literal=jwt-secret=$JWT_SECRET \
+  --from-literal=jwt-refresh-secret=$JWT_REFRESH_SECRET \
+  --from-literal=meili-master-key=$MEILI_MASTER_KEY \
+  -n $NAMESPACE
+```
+
+**Optional**: If using RAG API, add OpenAI API key:
+
+```bash
+oc create secret generic redhat-chat-secrets \
+  --from-literal=openai-api-key=<your-openai-api-key> \
+  --dry-run=client -o yaml | oc apply -f - -n $NAMESPACE
+```
+
+### Step 4: Configure Quay.io Credentials (Optional)
+
+The pipeline uses skopeo to copy images from OpenShift's internal registry to quay.io. If you need to push to quay.io, configure credentials:
+
+```bash
+# Create quay.io secret (optional - skopeo may use existing docker config)
+oc create secret docker-registry quay-registry-secret \
+  --docker-server=quay.io \
+  --docker-username=<your-username> \
+  --docker-password=<your-password> \
+  --docker-email=<your-email> \
+  -n $NAMESPACE
+
+# Link secret to pipeline service account
+oc secrets link pipeline quay-registry-secret -n $NAMESPACE
+```
+
+**Note**: The pipeline first builds to OpenShift's internal registry, then copies to quay.io. Internal registry access is automatic.
+
+### Step 5: Apply Base Manifests
+
+Deploy the base Kubernetes resources using Kustomize:
+
+```bash
+# Update namespace in kustomization.yaml if needed
+cd manifests/base
+
+# Apply manifests
+oc apply -k . -n $NAMESPACE
+
+# Or manually apply each file
+oc apply -f serviceaccount.yaml -n $NAMESPACE
+oc apply -f configmap.yaml -n $NAMESPACE
+oc apply -f service.yaml -n $NAMESPACE
+oc apply -f deployment.yaml -n $NAMESPACE
+```
+
+### Step 6: Create Tekton Pipeline
+
+Create the Tekton pipeline:
+
+```bash
+# Apply pipeline
+oc apply -f .tekton/pipeline.yaml -n $NAMESPACE
+
+# Verify pipeline was created
+oc get pipeline -n $NAMESPACE
+```
+
+### Step 7: Create PipelineRun
+
+Create a PipelineRun to execute the pipeline:
+
+```bash
+# Create PipelineRun
+cat <<EOF | oc apply -f -
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: redhat-chat-pipeline-run-$(date +%s)
+  namespace: $NAMESPACE
+spec:
+  pipelineRef:
+    name: redhat-chat-pipeline
+  params:
+    - name: git-url
+      value: https://github.com/maximilianoPizarro/LibreChat-RedHat
+    - name: git-revision
+      value: main
+    - name: image-registry
+      value: quay.io
+    - name: image-repository
+      value: maximilianopizarro/redhat-chat
+    - name: image-tag
+      value: latest
+    - name: namespace
+      value: $NAMESPACE
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: dockerconfig
+      secret:
+        secretName: quay-registry-secret
+EOF
+```
+
+### Step 8: Monitor Pipeline Execution
+
+Watch the pipeline execution:
+
+```bash
+# List PipelineRuns
+oc get pipelineruns -n $NAMESPACE
+
+# Watch pipeline logs
+oc get pipelineruns -n $NAMESPACE -w
+
+# View specific PipelineRun details
+oc describe pipelinerun <pipelinerun-name> -n $NAMESPACE
+
+# View task logs
+oc logs -f <taskrun-name> -n $NAMESPACE
+```
+
+### Step 9: Expose the Application
+
+Create a Route to expose the application:
+
+```bash
+# Create route
+oc expose service redhat-chat -n $NAMESPACE
+
+# Get route URL
+oc get route redhat-chat -n $NAMESPACE
+
+# Or create route manually with custom hostname
+cat <<EOF | oc apply -f -
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: redhat-chat
+  namespace: $NAMESPACE
+spec:
+  to:
+    kind: Service
+    name: redhat-chat
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+EOF
+```
+
+### Step 10: Verify Deployment
+
+Check that all resources are running:
+
+```bash
+# Check deployment status
+oc get deployment redhat-chat -n $NAMESPACE
+oc rollout status deployment/redhat-chat -n $NAMESPACE
+
+# Check pods
+oc get pods -n $NAMESPACE -l app=redhat-chat
+
+# Check services
+oc get svc -n $NAMESPACE
+
+# View application logs
+oc logs -f deployment/redhat-chat -n $NAMESPACE
+```
+
+### Updating the Application
+
+To update the application with new code:
+
+1. **Push code changes** to your Git repository
+2. **Create a new PipelineRun** (same as Step 7) or use a webhook trigger
+3. **Monitor the pipeline** execution (Step 8)
+4. **Verify the new deployment** (Step 10)
+
+### Troubleshooting
+
+**Pipeline fails to build:**
+```bash
+# Check BuildConfig
+oc get buildconfig redhat-chat -n $NAMESPACE
+oc describe buildconfig redhat-chat -n $NAMESPACE
+
+# Check build logs
+oc get builds -n $NAMESPACE -l buildconfig=redhat-chat
+oc logs build/<build-name> -n $NAMESPACE
+
+# Check pipeline task logs
+oc logs -f <build-taskrun-name> -n $NAMESPACE
+
+# Verify Dockerfile exists in repository
+oc get pipeline redhat-chat-pipeline -n $NAMESPACE -o yaml
+```
+
+**Image copy to quay.io fails:**
+```bash
+# Check if skopeo is available in the task
+oc logs -f <copy-to-quay-taskrun-name> -n $NAMESPACE
+
+# Verify quay.io credentials
+oc get secret quay-registry-secret -n $NAMESPACE
+
+# Check ImageStream exists
+oc get imagestream redhat-chat -n $NAMESPACE
+```
+
+**Deployment fails:**
+```bash
+# Check deployment events
+oc describe deployment redhat-chat -n $NAMESPACE
+
+# Check pod logs
+oc logs <pod-name> -n $NAMESPACE
+
+# Check if secrets exist
+oc get secrets -n $NAMESPACE
+```
+
+**Image pull errors:**
+```bash
+# Verify image exists in registry
+podman pull quay.io/maximilianopizarro/redhat-chat:latest
+
+# Check image pull secrets
+oc get secrets -n $NAMESPACE | grep registry
+```
+
+### Cleanup
+
+To remove all resources:
+
+```bash
+# Delete namespace (removes everything)
+oc delete namespace $NAMESPACE
+
+# Or delete resources individually
+oc delete -f .tekton/pipeline.yaml -n $NAMESPACE
+oc delete -k manifests/base/ -n $NAMESPACE
+oc delete secret redhat-chat-secrets -n $NAMESPACE
+```
+
+---
+
 ## 🌐 Resources
 
 **Red Hat Resources:**

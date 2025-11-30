@@ -159,6 +159,116 @@ commands:
     exec:
       component: api
       commandLine: npm install && npm run backend:dev
+  - id: deploy:setup
+    exec:
+      component: api
+      commandLine: |
+        # Use current project/namespace from workspace, or fallback to OPENSHIFT_NAMESPACE
+        NAMESPACE=$(oc project -q 2>/dev/null || echo "${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}")
+        if [ -z "$NAMESPACE" ] || [ "$NAMESPACE" = "default" ]; then
+          NAMESPACE=${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}
+        fi
+        echo "Setting up deployment for namespace: $NAMESPACE"
+        # Ensure we're in the correct namespace
+        oc project $NAMESPACE 2>/dev/null || oc create namespace $NAMESPACE
+        if ! oc get secret redhat-chat-secrets -n $NAMESPACE &> /dev/null; then
+          JWT_SECRET=$(openssl rand -hex 32)
+          JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+          MEILI_MASTER_KEY=$(openssl rand -hex 16)
+          oc create secret generic redhat-chat-secrets \
+            --from-literal=jwt-secret=$JWT_SECRET \
+            --from-literal=jwt-refresh-secret=$JWT_REFRESH_SECRET \
+            --from-literal=meili-master-key=$MEILI_MASTER_KEY \
+            -n $NAMESPACE
+          echo "✓ Secrets created"
+        else
+          echo "✓ Secrets already exist"
+        fi
+        cd manifests/base && oc apply -k . -n $NAMESPACE && cd ../..
+        echo "✓ Base manifests applied"
+        oc apply -f .tekton/pipeline.yaml -n $NAMESPACE
+        echo "✓ Pipeline created"
+  - id: deploy:run
+    exec:
+      component: api
+      commandLine: |
+        # Use current project/namespace from workspace
+        NAMESPACE=$(oc project -q 2>/dev/null || echo "${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}")
+        if [ -z "$NAMESPACE" ] || [ "$NAMESPACE" = "default" ]; then
+          NAMESPACE=${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}
+        fi
+        PIPELINE_RUN_NAME="redhat-chat-pipeline-run-$(date +%s)"
+        cat <<EOF | oc apply -f -
+        apiVersion: tekton.dev/v1beta1
+        kind: PipelineRun
+        metadata:
+          name: $PIPELINE_RUN_NAME
+          namespace: $NAMESPACE
+        spec:
+          pipelineRef:
+            name: redhat-chat-pipeline
+          params:
+            - name: git-url
+              value: https://github.com/maximilianoPizarro/LibreChat-RedHat
+            - name: git-revision
+              value: main
+            - name: image-name
+              value: redhat-chat
+            - name: image-tag
+              value: latest
+            - name: namespace
+              value: $NAMESPACE
+            - name: quay-repository
+              value: maximilianopizarro/redhat-chat
+          workspaces:
+            - name: source
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 1Gi
+        EOF
+        echo "✓ PipelineRun $PIPELINE_RUN_NAME created"
+        echo "Monitor with: oc get pipelineruns -n $NAMESPACE -w"
+        echo "View logs: oc logs -f pipelinerun/$PIPELINE_RUN_NAME -n $NAMESPACE"
+  - id: deploy:expose
+    exec:
+      component: api
+      commandLine: |
+        # Use current project/namespace from workspace
+        NAMESPACE=$(oc project -q 2>/dev/null || echo "${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}")
+        if [ -z "$NAMESPACE" ] || [ "$NAMESPACE" = "default" ]; then
+          NAMESPACE=${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}
+        fi
+        if ! oc get route redhat-chat -n $NAMESPACE &> /dev/null; then
+          oc expose service redhat-chat -n $NAMESPACE
+          echo "✓ Route created"
+        else
+          echo "✓ Route already exists"
+        fi
+        oc get route redhat-chat -n $NAMESPACE
+  - id: deploy:status
+    exec:
+      component: api
+      commandLine: |
+        # Use current project/namespace from workspace
+        NAMESPACE=$(oc project -q 2>/dev/null || echo "${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}")
+        if [ -z "$NAMESPACE" ] || [ "$NAMESPACE" = "default" ]; then
+          NAMESPACE=${OPENSHIFT_NAMESPACE:-maximilianopizarro5-dev}
+        fi
+        echo "=== Deployment Status ==="
+        oc get deployment redhat-chat -n $NAMESPACE
+        echo ""
+        echo "=== Pods ==="
+        oc get pods -n $NAMESPACE -l app=redhat-chat
+        echo ""
+        echo "=== Route ==="
+        oc get route redhat-chat -n $NAMESPACE 2>/dev/null || echo "Route not found"
+        echo ""
+        echo "=== PipelineRuns ==="
+        oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
     - start
