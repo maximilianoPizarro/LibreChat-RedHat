@@ -248,35 +248,66 @@ commands:
         if ! command -v node &> /dev/null; then
           echo "Node.js not found. Installing Node.js 20..."
           
-          # Check if we have sudo/dnf access
-          if command -v dnf &> /dev/null; then
-            # Try without sudo first (in case we're root)
+          # Try installing Node.js using nvm (Node Version Manager) - doesn't require root
+          if ! command -v nvm &> /dev/null; then
+            echo "Installing nvm (Node Version Manager)..."
+            export NVM_DIR="$HOME/.nvm"
+            mkdir -p "$NVM_DIR"
+            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          fi
+          
+          # Load nvm if available
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          if command -v nvm &> /dev/null; then
+            echo "Installing Node.js 20 using nvm..."
+            nvm install 20
+            nvm use 20
+            nvm alias default 20
+            echo "✓ Node.js installed successfully using nvm"
+          elif command -v dnf &> /dev/null; then
+            # Try dnf without sudo first (might work if container runs as root or has permissions)
+            echo "Trying dnf install (no sudo)..."
             if dnf install -y nodejs npm 2>/dev/null; then
-              echo "✓ Node.js installed successfully"
-            elif sudo dnf install -y nodejs npm 2>/dev/null; then
-              echo "✓ Node.js installed successfully (with sudo)"
+              echo "✓ Node.js installed successfully via dnf"
             else
-              # Try NodeSource repository
-              echo "Trying NodeSource repository..."
-              curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - 2>/dev/null || \
-                curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash - 2>/dev/null || {
-                echo "⚠ Failed to add NodeSource repository"
-                echo "Trying EPEL repository..."
-                dnf install -y epel-release 2>/dev/null || sudo dnf install -y epel-release 2>/dev/null
-                dnf install -y nodejs npm 2>/dev/null || sudo dnf install -y nodejs npm 2>/dev/null || {
-                  echo "✗ Failed to install Node.js automatically"
-                  echo "Please install manually: sudo dnf install -y nodejs npm"
-                  exit 1
-                }
-              }
-              # Install after adding repository
-              dnf install -y nodejs npm 2>/dev/null || sudo dnf install -y nodejs npm 2>/dev/null || {
-                echo "✗ Failed to install Node.js after adding repository"
+              echo "⚠ dnf install failed. Trying alternative: download Node.js binary..."
+              # Download and install Node.js binary directly (no root required)
+              NODE_VERSION="20.11.0"
+              ARCH="x64"
+              NODE_DISTRO="linux"
+              NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_DISTRO}-${ARCH}.tar.xz"
+              
+              echo "Downloading Node.js ${NODE_VERSION}..."
+              cd /tmp
+              curl -fsSL "$NODE_URL" -o node.tar.xz || {
+                echo "✗ Failed to download Node.js"
+                echo "Please install Node.js manually or contact your administrator"
                 exit 1
               }
+              
+              echo "Extracting Node.js..."
+              tar -xf node.tar.xz || {
+                echo "✗ Failed to extract Node.js"
+                exit 1
+              }
+              
+              echo "Installing Node.js to ~/.local..."
+              mkdir -p ~/.local
+              cp -r node-v${NODE_VERSION}-${NODE_DISTRO}-${ARCH}/* ~/.local/
+              rm -rf node-v${NODE_VERSION}-${NODE_DISTRO}-${ARCH} node.tar.xz
+              
+              # Add to PATH
+              export PATH="$HOME/.local/bin:$PATH"
+              echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+              echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
+              
+              echo "✓ Node.js installed successfully to ~/.local"
             fi
           else
-            echo "✗ dnf not found. Cannot install Node.js automatically"
+            echo "✗ Cannot install Node.js: neither nvm nor dnf available"
             exit 1
           fi
         fi
