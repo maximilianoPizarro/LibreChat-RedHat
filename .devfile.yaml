@@ -14,9 +14,23 @@ metadata:
   attributes:
     tech-preview: "true"
 components:
+  # Container for OpenShift CLI tasks (oc, kubectl, etc.)
   - name: api
     container:
-      image: quay.io/devfile/node:20-ubi9
+      image: quay.io/devfile/base-developer-image:ubi9-latest
+      memoryLimit: 1Gi
+      cpuLimit: 500m
+      cpuRequest: 100m
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # Keep container running
+          tail -f /dev/null
+  # Container for Node.js tasks (development, build, etc.)
+  - name: nodejs
+    container:
+      image: registry.access.redhat.com/ubi8/nodejs-20:latest
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
@@ -154,13 +168,14 @@ components:
   #   volume:
   #     size: 1Gi
 commands:
+  # Node.js tasks - use nodejs component (Red Hat official Node.js image)
   - id: init
     exec:
-      component: api
+      component: nodejs
       commandLine: echo "Initializing Red Hat Chat workspace..." && npm install
   - id: build
     exec:
-      component: api
+      component: nodejs
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
         # Ensure all dependencies are installed first
@@ -176,7 +191,7 @@ commands:
         npm run build:client
   - id: run
     exec:
-      component: api
+      component: nodejs
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
@@ -186,7 +201,7 @@ commands:
         npm run backend:dev
   - id: start
     exec:
-      component: api
+      component: nodejs
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
@@ -199,16 +214,16 @@ commands:
       component: api
       commandLine: |
         echo "Workspace container started successfully"
-        echo "To initialize dependencies, run: devfile init-workspace"
+        echo "To initialize dependencies, run: devfile init-workspace-full"
         echo "To start the backend, run: devfile run"
         # Simple check - don't fail if things aren't ready
         cd /projects/librechat-redhat 2>/dev/null || cd /projects 2>/dev/null || true
         echo "Current directory: $(pwd)"
   - id: init-workspace-full
     exec:
-      component: api
+      component: nodejs
       commandLine: |
-        echo "Initializing workspace..."
+        echo "Initializing workspace with Node.js..."
         cd /projects/librechat-redhat || cd /projects || pwd
         
         # Verify Node.js and npm are available
