@@ -336,4 +336,9 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
-    - init-workspace
+    - exec:
+        component: api
+        commandLine: |
+          echo "Workspace container started successfully"
+          echo "Run 'devfile init-workspace' to install dependencies"
+          echo "Then run 'devfile run' to start the backend server"
