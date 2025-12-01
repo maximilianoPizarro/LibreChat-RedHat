@@ -44,6 +44,7 @@ export default defineConfig(({ command }) => ({
       useCredentials: true,
       includeManifestIcons: false,
       workbox: {
+        globDirectory: './dist', // Only scan the dist directory
         globPatterns: [
           '**/*.{js,css,html}',
           'assets/favicon*.png',
@@ -52,9 +53,21 @@ export default defineConfig(({ command }) => ({
           'assets/maskable-icon.png',
           'manifest.webmanifest',
         ],
-        globIgnores: ['images/**/*', '**/*.map', 'index.html'],
+        globIgnores: [
+          'images/**/*',
+          '**/*.map',
+          'index.html',
+          'sw.js',
+          'workbox-*.js',
+        ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
+        // Exclude node_modules and packages from being scanned
+        exclude: [
+          /node_modules/,
+          /packages/,
+          /\.map$/,
+        ],
       },
       includeAssets: [],
       manifest: {
@@ -105,6 +118,12 @@ export default defineConfig(({ command }) => ({
     minify: 'terser',
     rollupOptions: {
       preserveEntrySignatures: 'strict',
+      external: [
+        // Exclude packages/client from being processed - it's already built
+        /^@librechat\/client/,
+        // Exclude peer dependencies that are external
+        'lucide-react',
+      ],
       output: {
         manualChunks(id: string) {
           const normalizedId = id.replace(/\\/g, '/');

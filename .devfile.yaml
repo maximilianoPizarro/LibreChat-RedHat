@@ -143,28 +143,30 @@ components:
       volumeMounts:
         - name: meili-data
           path: /meili_data
-  - name: ollama
-    attributes:
-      container-overrides:
-        resources:
-          limits:
-            cpu: 2000m
-            memory: 4Gi
-            # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
-          requests:
-            cpu: 500m
-            memory: 2Gi
-            # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
-    container:
-      image: docker.io/ollama/ollama:latest
-      mountSources: true
-      sourceMapping: /.ollama
-      endpoints:
-        - name: ollama
-          targetPort: 11434
-          exposure: internal
-          protocol: http
-          path: /
+  # Ollama component - commented out due to resource constraints
+  # Uncomment when you have sufficient resources (4Gi+ memory available)
+  #- name: ollama
+  #  attributes:
+  #    container-overrides:
+  #      resources:
+  #        limits:
+  #          cpu: 2000m
+  #          memory: 4Gi
+  #          # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
+  #        requests:
+  #          cpu: 500m
+  #          memory: 2Gi
+  #          # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
+  #  container:
+  #    image: docker.io/ollama/ollama:latest
+  #    mountSources: true
+  #    sourceMapping: /.ollama
+  #    endpoints:
+  #      - name: ollama
+  #        targetPort: 11434
+  #        exposure: internal
+  #        protocol: http
+  #        path: /
   # VectorDB (pgvector) - Required for RAG API functionality
   # Note: VectorDB may have issues in some OpenShift environments
   #- name: vectordb
@@ -739,43 +741,45 @@ commands:
         echo ""
         echo "=== PipelineRuns ==="
         oc get pipelineruns -n $NAMESPACE
-  - id: pull-ollama-model
-    exec:
-      component: ollama
-      commandLine: |
-        echo "Waiting for Ollama to be ready..."
-        MAX_ATTEMPTS=30
-        ATTEMPT=0
-        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          if curl -s http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
-            echo "✓ Ollama is ready"
-            break
-          fi
-          ATTEMPT=$((ATTEMPT + 1))
-          if [ $((ATTEMPT % 5)) -eq 0 ]; then
-            echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Ollama not ready yet, waiting..."
-          fi
-          sleep 2
-        done
-        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-          echo "⚠ Warning: Ollama may not be ready, but attempting to pull model anyway..."
-        fi
-        echo "Pulling model llama3.2:3b-instruct-q4_K_M..."
-        ollama pull llama3.2:3b-instruct-q4_K_M || {
-          echo "⚠ Failed to pull model, will retry later. You can manually pull it with: ollama pull llama3.2:3b-instruct-q4_K_M"
-          exit 0  # Don't fail the hook, allow workspace to start
-        }
-        echo "✓ Model pulled successfully"
-  - id: pull-autocomplete-model
-    exec:
-      component: ollama
-      commandLine: |
-        echo "Pulling autocomplete model starcoder2:3b..."
-        ollama pull starcoder2:3b || {
-          echo "⚠ Failed to pull autocomplete model, will retry later. You can manually pull it with: ollama pull starcoder2:3b"
-          exit 0  # Don't fail the hook, allow workspace to start
-        }
-        echo "✓ Autocomplete model pulled successfully"
+  # Ollama model download commands - commented out due to resource constraints
+  # Uncomment when Ollama component is enabled
+  #- id: pull-ollama-model
+  #  exec:
+  #    component: ollama
+  #    commandLine: |
+  #      echo "Waiting for Ollama to be ready..."
+  #      MAX_ATTEMPTS=30
+  #      ATTEMPT=0
+  #      while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+  #        if curl -s http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+  #          echo "✓ Ollama is ready"
+  #          break
+  #        fi
+  #        ATTEMPT=$((ATTEMPT + 1))
+  #        if [ $((ATTEMPT % 5)) -eq 0 ]; then
+  #          echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Ollama not ready yet, waiting..."
+  #        fi
+  #        sleep 2
+  #      done
+  #      if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+  #        echo "⚠ Warning: Ollama may not be ready, but attempting to pull model anyway..."
+  #      fi
+  #      echo "Pulling model llama3.2:3b-instruct-q4_K_M..."
+  #      ollama pull llama3.2:3b-instruct-q4_K_M || {
+  #        echo "⚠ Failed to pull model, will retry later. You can manually pull it with: ollama pull llama3.2:3b-instruct-q4_K_M"
+  #        exit 0  # Don't fail the hook, allow workspace to start
+  #      }
+  #      echo "✓ Model pulled successfully"
+  #- id: pull-autocomplete-model
+  #  exec:
+  #    component: ollama
+  #    commandLine: |
+  #      echo "Pulling autocomplete model starcoder2:3b..."
+  #      ollama pull starcoder2:3b || {
+  #        echo "⚠ Failed to pull autocomplete model, will retry later. You can manually pull it with: ollama pull starcoder2:3b"
+  #        exit 0  # Don't fail the hook, allow workspace to start
+  #      }
+  #      echo "✓ Autocomplete model pulled successfully"
   - id: copy-continue-config
     exec:
       component: api
@@ -792,6 +796,7 @@ commands:
 events:
   postStart:
     - init-workspace
-    - pull-ollama-model
-    - pull-autocomplete-model
+    # Ollama model downloads - commented out due to resource constraints
+    #- pull-ollama-model
+    #- pull-autocomplete-model
     - copy-continue-config
