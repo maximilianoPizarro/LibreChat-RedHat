@@ -13,16 +13,12 @@ metadata:
   version: 0.8.1-rc2
   attributes:
     tech-preview: "true"
-parent:
-  id: nodejs
-  version: 2.2.0
-  registryUrl: https://registry.devfile.io
 components:
   # Main container for both OpenShift CLI and Node.js tasks
   # Uses universal developer image with all tools included (oc, kubectl, node, npm, etc.)
   - name: api
     container:
-      image: quay.io/devfile/universal-developer-image:ubi9-latest
+      image: quay.io/devfile/base-developer-image:ubi9-latest
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
@@ -68,15 +64,8 @@ components:
         - |
           # Keep container running
           tail -f /dev/null
-  # Alias for nodejs component - uses same container as api (universal developer image)
-  - name: nodejs
-    attributes:
-      # Merge with parent component instead of replacing
-      controller.devfile.io/merge-contribution: true
-    container:
-      # Use same universal developer image (includes Node.js, oc, kubectl, etc.)
-      # Parent provides base config, we just reference the same image
-      image: quay.io/devfile/universal-developer-image:ubi9-latest
+  # nodejs component - let parent handle it completely, we don't override
+  # The parent will provide Node.js configuration
   - name: mongodb
     container:
       image: docker.io/library/mongo:7.0
