@@ -34,8 +34,12 @@ components:
   # Container for Node.js tasks (development, build, etc.)
   # Overrides parent nodejs component with custom configuration
   - name: nodejs
+    attributes:
+      # Merge with parent component instead of replacing
+      controller.devfile.io/merge-contribution: true
     container:
-      # Parent provides Node.js, we override with our custom config
+      # Use image compatible with DevSpaces (parent provides Node.js 18, we use compatible image)
+      image: quay.io/devfile/node:lts-ubi9
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
