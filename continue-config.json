@@ -1,0 +1,17 @@
+{
+  "models": [
+    {
+      "title": "On-prem Llama3.2-3b",
+      "model": "llama3.2:3b-instruct-q4_K_M",
+      "apiBase": "http://127.0.0.1:11434",
+      "provider": "ollama"
+    }
+  ],
+  "tabAutocompleteModel": {
+    "title": "Starcoder2 3b",
+    "provider": "ollama",
+    "model": "starcoder2:3b"
+  },
+  "allowAnonymousTelemetry": false
+}
+

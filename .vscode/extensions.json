@@ -5,7 +5,8 @@
     "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ms-azuretools.vscode-docker",
     "redhat.vscode-tekton-pipelines",
-    "ms-vscode.vscode-json"
+    "ms-vscode.vscode-json",
+    "continue.continue"
   ],
   "unwantedRecommendations": []
 }

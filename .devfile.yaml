@@ -750,7 +750,32 @@ commands:
           exit 0  # Don't fail the hook, allow workspace to start
         }
         echo "✓ Model pulled successfully"
+  - id: pull-autocomplete-model
+    exec:
+      component: ollama
+      commandLine: |
+        echo "Pulling autocomplete model starcoder2:3b..."
+        ollama pull starcoder2:3b || {
+          echo "⚠ Failed to pull autocomplete model, will retry later. You can manually pull it with: ollama pull starcoder2:3b"
+          exit 0  # Don't fail the hook, allow workspace to start
+        }
+        echo "✓ Autocomplete model pulled successfully"
+  - id: copy-continue-config
+    exec:
+      component: api
+      commandLine: |
+        cd /projects/librechat-redhat || cd /projects || pwd
+        if [ -f continue-config.json ]; then
+          echo "Copying Continue configuration..."
+          mkdir -p /home/user/.continue
+          cp continue-config.json /home/user/.continue/config.json
+          echo "✓ Continue configuration copied to /home/user/.continue/config.json"
+        else
+          echo "⚠ continue-config.json not found, skipping Continue configuration"
+        fi
 events:
   postStart:
     - init-workspace
     - pull-ollama-model
+    - pull-autocomplete-model
+    - copy-continue-config
