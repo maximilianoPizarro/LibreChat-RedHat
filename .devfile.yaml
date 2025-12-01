@@ -197,17 +197,25 @@ commands:
           exit 1
         fi
         # Check and install dependencies
-        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ] || [ ! -d node_modules/winston-daily-rotate-file ]; then
+        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ] || [ ! -d node_modules/winston-daily-rotate-file ] || [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
           echo "Dependencies not fully installed. Installing now..."
-          npm install --legacy-peer-deps || npm install
+          npm install --legacy-peer-deps --workspaces || npm install --legacy-peer-deps || npm install
           if [ $? -ne 0 ]; then
             echo "✗ Failed to install dependencies"
             exit 1
           fi
           # Verify critical dependencies are installed
-          if [ ! -d node_modules/winston-daily-rotate-file ]; then
-            echo "⚠ winston-daily-rotate-file still missing, reinstalling..."
-            npm install winston-daily-rotate-file --legacy-peer-deps || npm install winston-daily-rotate-file
+          MISSING_CRITICAL=""
+          if [ ! -d node_modules/winston-daily-rotate-file ] && [ ! -d packages/data-schemas/node_modules/winston-daily-rotate-file ]; then
+            MISSING_CRITICAL="$MISSING_CRITICAL winston-daily-rotate-file"
+          fi
+          if [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
+            MISSING_CRITICAL="$MISSING_CRITICAL @opentelemetry/exporter-trace-otlp-http"
+          fi
+          if [ -n "$MISSING_CRITICAL" ]; then
+            echo "⚠ Some critical dependencies are missing: $MISSING_CRITICAL"
+            echo "Installing missing dependencies..."
+            npm install $MISSING_CRITICAL --legacy-peer-deps || npm install $MISSING_CRITICAL
           fi
         fi
         
@@ -386,6 +394,9 @@ commands:
             fi
             if [ ! -f node_modules/.bin/cross-env ]; then
               MISSING_DEPS="$MISSING_DEPS cross-env"
+            fi
+            if [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
+              MISSING_DEPS="$MISSING_DEPS @opentelemetry/exporter-trace-otlp-http"
             fi
             
             if [ -n "$MISSING_DEPS" ]; then
