@@ -203,12 +203,23 @@ commands:
     exec:
       component: api
       commandLine: |
-        echo "Workspace container started successfully"
-        echo "To initialize dependencies, run: devfile init-workspace-full"
-        echo "To start the backend, run: devfile run-backend"
-        # Simple check - don't fail if things aren't ready
-        cd /projects/librechat-redhat 2>/dev/null || cd /projects 2>/dev/null || true
-        echo "Current directory: $(pwd)"
+        echo "=========================================="
+        echo "Red Hat Chat Workspace Ready!"
+        echo "=========================================="
+        echo ""
+        echo "To initialize dependencies, run:"
+        echo "  devfile init-workspace-full"
+        echo ""
+        echo "To start the backend server, run:"
+        echo "  devfile run-backend"
+        echo ""
+        echo "To deploy to OpenShift, run:"
+        echo "  devfile deploy-setup"
+        echo "  devfile deploy-run"
+        echo "  devfile deploy-expose"
+        echo ""
+        echo "Current directory: $(pwd 2>/dev/null || echo '/projects')"
+        echo "=========================================="
   - id: init-workspace-full
     exec:
       component: api
@@ -362,4 +373,4 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
-    - init-workspace-full
+    - init-workspace
