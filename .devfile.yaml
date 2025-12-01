@@ -112,7 +112,7 @@ components:
       endpoints:
         - name: mongodb
           targetPort: 27017
-          exposure: none
+          exposure: internal
           protocol: tcp
       command:
         - mongod
