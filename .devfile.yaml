@@ -165,20 +165,41 @@ commands:
   - id: run
     exec:
       component: api
-      commandLine: npm run backend:dev
+      commandLine: |
+        cd /projects/librechat-redhat || cd /projects || pwd
+        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
+          echo "Dependencies not installed. Installing now..."
+          npm install --legacy-peer-deps || npm install
+        fi
+        npm run backend:dev
   - id: start
     exec:
       component: api
-      commandLine: npm install && npm run backend:dev
+      commandLine: |
+        cd /projects/librechat-redhat || cd /projects || pwd
+        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
+          echo "Dependencies not installed. Installing now..."
+          npm install --legacy-peer-deps || npm install
+        fi
+        npm run backend:dev
   - id: init-workspace
     exec:
       component: api
       commandLine: |
         echo "Initializing workspace..."
+        cd /projects/librechat-redhat || cd /projects || pwd
         if [ -f package.json ]; then
-          npm install || echo "Warning: npm install failed, but continuing..."
+          echo "Installing dependencies (this may take a few minutes)..."
+          npm install --legacy-peer-deps || npm install
+          if [ $? -eq 0 ]; then
+            echo "✓ Dependencies installed successfully"
+          else
+            echo "✗ npm install failed. Please run 'npm install' manually."
+            exit 1
+          fi
         else
-          echo "Warning: package.json not found, skipping npm install"
+          echo "✗ package.json not found in $(pwd)"
+          exit 1
         fi
         echo "✓ Workspace initialized"
         echo "Run 'devfile run' to start the backend server"
