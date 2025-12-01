@@ -28,6 +28,11 @@ components:
           exposure: public
           protocol: http
           path: /
+        - name: api-internal
+          targetPort: 3080
+          exposure: none
+          protocol: http
+          path: /
       env:
         - name: NODE_ENV
           value: development
@@ -129,6 +134,8 @@ components:
       env:
         - name: MEILI_HOST
           value: http://meilisearch:7700
+        - name: MEILI_ENV
+          value: development
         - name: MEILI_NO_ANALYTICS
           value: "true"
         - name: MEILI_MASTER_KEY
@@ -136,28 +143,28 @@ components:
       volumeMounts:
         - name: meili-data
           path: /meili_data
-  # VectorDB and RAG API are optional - uncomment to enable RAG functionality
+  # VectorDB (pgvector) - Required for RAG API functionality
   # Note: VectorDB may have issues in some OpenShift environments
-  # - name: vectordb
-  #   container:
-  #     image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
-  #     memoryLimit: 1Gi
-  #     cpuLimit: 500m
-  #     endpoints:
-  #       - name: postgres
-  #         targetPort: 5432
-  #         exposure: none
-  #         protocol: tcp
-  #     env:
-  #       - name: POSTGRES_DB
-  #         value: mydatabase
-  #       - name: POSTGRES_USER
-  #         value: myuser
-  #       - name: POSTGRES_PASSWORD
-  #         value: mypassword
-  #     volumeMounts:
-  #       - name: pg-data
-  #         path: /var/lib/postgresql/data
+  - name: vectordb
+    container:
+      image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
+      memoryLimit: 1Gi
+      cpuLimit: 500m
+      endpoints:
+        - name: postgres
+          targetPort: 5432
+          exposure: none
+          protocol: tcp
+      env:
+        - name: POSTGRES_DB
+          value: mydatabase
+        - name: POSTGRES_USER
+          value: myuser
+        - name: POSTGRES_PASSWORD
+          value: mypassword
+      volumeMounts:
+        - name: pg-data
+          path: /var/lib/postgresql/data
   # - name: rag-api
   #   container:
   #     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
@@ -189,10 +196,10 @@ components:
   - name: meili-data
     volume:
       size: 1Gi
-  # pg-data volume - uncomment if using vectordb
-  # - name: pg-data
-  #   volume:
-  #     size: 1Gi
+  # pg-data volume for vectordb
+  - name: pg-data
+    volume:
+      size: 1Gi
 commands:
   # Custom Node.js tasks - using different names to avoid conflicts with parent
   - id: init-custom
@@ -259,22 +266,56 @@ commands:
         # Wait for Meilisearch to be ready
         echo "Waiting for Meilisearch to be ready..."
         ATTEMPT=0
+        MEILI_READY=false
         while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
           # Try multiple methods to check Meilisearch connectivity
-          if (command -v nc >/dev/null 2>&1 && nc -z meilisearch 7700 2>/dev/null) || \
-             (command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/meilisearch/7700" 2>/dev/null) || \
-             (command -v curl >/dev/null 2>&1 && curl -s -f http://meilisearch:7700/health >/dev/null 2>&1); then
-            echo "✓ Meilisearch is ready"
-            break
+          # First check if port is open
+          PORT_OPEN=false
+          if command -v nc >/dev/null 2>&1 && nc -z meilisearch 7700 2>/dev/null; then
+            PORT_OPEN=true
+          elif command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/meilisearch/7700" 2>/dev/null; then
+            PORT_OPEN=true
           fi
+          
+          # If port is open, check if health endpoint responds
+          if [ "$PORT_OPEN" = true ]; then
+            if command -v curl >/dev/null 2>&1; then
+              # Check health endpoint with proper headers
+              # Try health check with master key first, then without
+              HEALTH_OK=false
+              if curl -s -f -H "Authorization: Bearer librechat" http://meilisearch:7700/health >/dev/null 2>&1; then
+                HEALTH_OK=true
+              elif curl -s -f http://meilisearch:7700/health >/dev/null 2>&1; then
+                HEALTH_OK=true
+              fi
+              
+              if [ "$HEALTH_OK" = true ]; then
+                MEILI_READY=true
+                echo "✓ Meilisearch is ready and responding"
+                # Give it extra time to fully initialize indexes and be ready for connections
+                echo "  Waiting additional 3 seconds for Meilisearch to fully initialize..."
+                sleep 3
+                break
+              fi
+            else
+              # If curl is not available but port is open, assume it's ready
+              MEILI_READY=true
+              echo "✓ Meilisearch port is open (health check unavailable)"
+              sleep 2
+              break
+            fi
+          fi
+          
           ATTEMPT=$((ATTEMPT + 1))
           echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Meilisearch not ready yet, waiting..."
           sleep 2
         done
-        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+        if [ "$MEILI_READY" = false ]; then
           echo "⚠ Warning: Meilisearch may not be ready after $MAX_ATTEMPTS attempts"
           echo "  Checking Meilisearch container status..."
+          echo "  You may need to check if the Meilisearch container is running"
           echo "  Continuing anyway, but connection may fail..."
+          echo "  You can disable search by setting SEARCH=false in your environment"
         fi
         
         # Check and install dependencies
@@ -296,7 +337,13 @@ commands:
           if [ -n "$MISSING_CRITICAL" ]; then
             echo "⚠ Some critical dependencies are missing: $MISSING_CRITICAL"
             echo "Installing missing dependencies..."
-            npm install $MISSING_CRITICAL --legacy-peer-deps || npm install $MISSING_CRITICAL
+            # Install without --workspaces to avoid npm errors
+            for dep in $MISSING_CRITICAL; do
+              echo "  Installing $dep..."
+              npm install "$dep" --legacy-peer-deps --save || \
+              npm install "$dep" --legacy-peer-deps || \
+              npm install "$dep"
+            done
           fi
         fi
         
