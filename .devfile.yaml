@@ -393,10 +393,26 @@ commands:
         # Check if client is built
         if [ ! -f client/dist/index.html ]; then
           echo "Client not built. Building now..."
-          npm run build:client || {
-            echo "⚠ Failed to build client. Please run 'npm run build:client' manually"
-            echo "⚠ Continuing anyway, but the application may not work correctly..."
+          echo "This may take a few minutes..."
+          cd client
+          npm run build || {
+            echo "⚠ Failed to build client from client directory"
+            cd ..
+            npm run build:client || {
+              echo "⚠ Failed to build client. Please run 'npm run build:client' manually"
+              echo "⚠ Continuing anyway, but the application may not work correctly..."
+            }
           }
+          cd ..
+          # Verify the build was successful
+          if [ ! -f client/dist/index.html ]; then
+            echo "⚠ Warning: client/dist/index.html still not found after build attempt"
+            echo "⚠ The application may not work correctly. Please check build errors above."
+          else
+            echo "✓ Client built successfully"
+          fi
+        else
+          echo "✓ Client already built"
         fi
         
         echo "Starting backend server..."

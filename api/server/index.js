@@ -59,7 +59,17 @@ const startServer = async () => {
   await performStartupChecks(appConfig);
   await updateInterfacePermissions(appConfig);
 
-  const indexPath = path.join(appConfig.paths.dist, 'index.html');
+  // Check if dist exists, if not, try to use client/index.html as fallback in development
+  let indexPath = path.join(appConfig.paths.dist, 'index.html');
+  if (!fs.existsSync(indexPath) && process.env.NODE_ENV === 'development') {
+    const fallbackPath = path.join(appConfig.paths.clientPath, 'index.html');
+    if (fs.existsSync(fallbackPath)) {
+      logger.warn(`client/dist/index.html not found, using ${fallbackPath} as fallback in development mode`);
+      indexPath = fallbackPath;
+    } else {
+      throw new Error(`Neither ${indexPath} nor ${fallbackPath} exist. Please build the client first with 'npm run build:client'`);
+    }
+  }
   let indexHTML = fs.readFileSync(indexPath, 'utf8');
 
   // In order to provide support to serving the application in a sub-directory
