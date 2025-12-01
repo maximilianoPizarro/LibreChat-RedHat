@@ -41,15 +41,49 @@ components:
           value: mongodb://mongodb:27017/LibreChat
         - name: MEILI_HOST
           value: http://meilisearch:7700
+        - name: MEILI_MASTER_KEY
+          value: librechat
+        - name: MEILI_NO_ANALYTICS
+          value: "true"
+        - name: SEARCH
+          value: "true"
         # RAG API is optional - uncomment vectordb and rag-api components to enable
         # - name: RAG_API_URL
         #   value: http://rag-api:8000
         # - name: RAG_PORT
         #   value: "8000"
+        # JWT Secrets - generate secure values for production
+        - name: JWT_SECRET
+          value: 8a447c316c171f5df8e304c085187b6d10e4eeef5174137d4ad4d2cdd956f5e7
+        - name: JWT_REFRESH_SECRET
+          value: 83096493d70e22561f84191c24f459d72e9b41f4c8657fe43aae8cb9b0fe1fa4
         - name: JWT_EXPIRES_IN
           value: 1d
         - name: JWT_REFRESH_EXPIRES_IN
           value: 7d
+        # Authentication settings
+        - name: ALLOW_EMAIL_LOGIN
+          value: "true"
+        - name: ALLOW_REGISTRATION
+          value: "true"
+        - name: ALLOW_SOCIAL_LOGIN
+          value: "true"
+        # OpenID/OAuth configuration (optional - uncomment and configure if needed)
+        # - name: OPENID_LOGIN_ENABLED
+        #   value: "true"
+        # - name: OPENID_ISSUER
+        #   value: https://auth.redhat.com/realms/librechat
+        # - name: OPENID_CLIENT_ID
+        #   value: client-id
+        # - name: OPENID_CLIENT_SECRET
+        #   value: client-secret
+        # - name: OPENID_SCOPE
+        #   value: openid profile email
+        # Embeddings (without Ollama - use OpenAI or disable)
+        # - name: EMBEDDINGS_PROVIDER
+        #   value: openai
+        # - name: OPENAI_API_KEY
+        #   value: sk-your_openai_api_key_here
       volumeMounts:
         - name: images-data
           path: /app/client/public/images
@@ -88,15 +122,16 @@ components:
       endpoints:
         - name: meilisearch
           targetPort: 7700
-          exposure: none
+          exposure: public
           protocol: http
+          path: /
       env:
         - name: MEILI_HOST
           value: http://meilisearch:7700
         - name: MEILI_NO_ANALYTICS
           value: "true"
         - name: MEILI_MASTER_KEY
-          value: change_me_to_a_secure_random_key_minimum_16_characters
+          value: librechat
       volumeMounts:
         - name: meili-data
           path: /meili_data
@@ -196,6 +231,40 @@ commands:
           echo "Node.js not found. Please run 'devfile init-workspace-full' first to install Node.js"
           exit 1
         fi
+        
+        # Wait for MongoDB to be ready
+        echo "Waiting for MongoDB to be ready..."
+        MAX_ATTEMPTS=30
+        ATTEMPT=0
+        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          if nc -z mongodb 27017 2>/dev/null || timeout 2 bash -c "echo > /dev/tcp/mongodb/27017" 2>/dev/null; then
+            echo "✓ MongoDB is ready"
+            break
+          fi
+          ATTEMPT=$((ATTEMPT + 1))
+          echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: MongoDB not ready yet, waiting..."
+          sleep 2
+        done
+        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+          echo "⚠ Warning: MongoDB may not be ready, but continuing anyway..."
+        fi
+        
+        # Wait for Meilisearch to be ready
+        echo "Waiting for Meilisearch to be ready..."
+        ATTEMPT=0
+        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+          if nc -z meilisearch 7700 2>/dev/null || timeout 2 bash -c "echo > /dev/tcp/meilisearch/7700" 2>/dev/null; then
+            echo "✓ Meilisearch is ready"
+            break
+          fi
+          ATTEMPT=$((ATTEMPT + 1))
+          echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Meilisearch not ready yet, waiting..."
+          sleep 2
+        done
+        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+          echo "⚠ Warning: Meilisearch may not be ready, but continuing anyway..."
+        fi
+        
         # Check and install dependencies
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ] || [ ! -d node_modules/winston-daily-rotate-file ] || [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
           echo "Dependencies not fully installed. Installing now..."
@@ -239,6 +308,7 @@ commands:
             exit 1
           }
         fi
+        echo "Starting backend server..."
         npm run backend:dev
   - id: start-backend
     exec:
