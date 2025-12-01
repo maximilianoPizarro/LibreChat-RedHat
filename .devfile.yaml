@@ -39,10 +39,11 @@ components:
           value: mongodb://mongodb:27017/LibreChat
         - name: MEILI_HOST
           value: http://meilisearch:7700
-        - name: RAG_API_URL
-          value: http://rag-api:8000
-        - name: RAG_PORT
-          value: "8000"
+        # RAG API is optional - uncomment vectordb and rag-api components to enable
+        # - name: RAG_API_URL
+        #   value: http://rag-api:8000
+        # - name: RAG_PORT
+        #   value: "8000"
         - name: JWT_EXPIRES_IN
           value: 1d
         - name: JWT_REFRESH_EXPIRES_IN
@@ -95,42 +96,44 @@ components:
       volumeMounts:
         - name: meili-data
           path: /meili_data
-  - name: vectordb
-    container:
-      image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
-      memoryLimit: 1Gi
-      cpuLimit: 500m
-      endpoints:
-        - name: postgres
-          targetPort: 5432
-          exposure: none
-          protocol: tcp
-      env:
-        - name: POSTGRES_DB
-          value: mydatabase
-        - name: POSTGRES_USER
-          value: myuser
-        - name: POSTGRES_PASSWORD
-          value: mypassword
-      volumeMounts:
-        - name: pg-data
-          path: /var/lib/postgresql/data
-  - name: rag-api
-    container:
-      image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
-      memoryLimit: 1Gi
-      endpoints:
-        - name: rag-api
-          targetPort: 8000
-          exposure: none
-          protocol: http
-      env:
-        - name: DB_HOST
-          value: vectordb
-        - name: RAG_PORT
-          value: "8000"
-        - name: OPENAI_API_KEY
-          value: ""
+  # VectorDB and RAG API are optional - uncomment to enable RAG functionality
+  # Note: VectorDB may have issues in some OpenShift environments
+  # - name: vectordb
+  #   container:
+  #     image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
+  #     memoryLimit: 1Gi
+  #     cpuLimit: 500m
+  #     endpoints:
+  #       - name: postgres
+  #         targetPort: 5432
+  #         exposure: none
+  #         protocol: tcp
+  #     env:
+  #       - name: POSTGRES_DB
+  #         value: mydatabase
+  #       - name: POSTGRES_USER
+  #         value: myuser
+  #       - name: POSTGRES_PASSWORD
+  #         value: mypassword
+  #     volumeMounts:
+  #       - name: pg-data
+  #         path: /var/lib/postgresql/data
+  # - name: rag-api
+  #   container:
+  #     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+  #     memoryLimit: 1Gi
+  #     endpoints:
+  #       - name: rag-api
+  #         targetPort: 8000
+  #         exposure: none
+  #         protocol: http
+  #     env:
+  #       - name: DB_HOST
+  #         value: vectordb
+  #       - name: RAG_PORT
+  #         value: "8000"
+  #       - name: OPENAI_API_KEY
+  #         value: ""
   - name: images-data
     volume:
       size: 1Gi
@@ -146,9 +149,10 @@ components:
   - name: meili-data
     volume:
       size: 1Gi
-  - name: pg-data
-    volume:
-      size: 1Gi
+  # pg-data volume - uncomment if using vectordb
+  # - name: pg-data
+  #   volume:
+  #     size: 1Gi
 commands:
   - id: init
     exec:
