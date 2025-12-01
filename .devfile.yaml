@@ -18,28 +18,11 @@ parent:
   version: 2.2.0
   registryUrl: https://registry.devfile.io
 components:
-  # Container for OpenShift CLI tasks (oc, kubectl, etc.)
+  # Main container for both OpenShift CLI and Node.js tasks
+  # Uses universal developer image with all tools included (oc, kubectl, node, npm, etc.)
   - name: api
     container:
-      image: quay.io/devfile/base-developer-image:ubi9-latest
-      memoryLimit: 1Gi
-      cpuLimit: 500m
-      cpuRequest: 100m
-      command:
-        - /bin/sh
-        - -c
-        - |
-          # Keep container running
-          tail -f /dev/null
-  # Container for Node.js tasks (development, build, etc.)
-  # Overrides parent nodejs component with custom configuration
-  - name: nodejs
-    attributes:
-      # Merge with parent component instead of replacing
-      controller.devfile.io/merge-contribution: true
-    container:
-      # Use image compatible with DevSpaces (parent provides Node.js 18, we use compatible image)
-      image: quay.io/devfile/node:lts-ubi9
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
@@ -85,6 +68,15 @@ components:
         - |
           # Keep container running
           tail -f /dev/null
+  # Alias for nodejs component - uses same container as api (universal developer image)
+  - name: nodejs
+    attributes:
+      # Merge with parent component instead of replacing
+      controller.devfile.io/merge-contribution: true
+    container:
+      # Use same universal developer image (includes Node.js, oc, kubectl, etc.)
+      # Parent provides base config, we just reference the same image
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
   - name: mongodb
     container:
       image: docker.io/library/mongo:7.0
@@ -180,11 +172,11 @@ commands:
   # Custom Node.js tasks - using different names to avoid conflicts with parent
   - id: init-custom
     exec:
-      component: nodejs
+      component: api
       commandLine: echo "Initializing Red Hat Chat workspace..." && npm install
   - id: build-custom
     exec:
-      component: nodejs
+      component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
         # Ensure all dependencies are installed first
@@ -200,7 +192,7 @@ commands:
         npm run build:client
   - id: run-backend
     exec:
-      component: nodejs
+      component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
@@ -210,7 +202,7 @@ commands:
         npm run backend:dev
   - id: start-backend
     exec:
-      component: nodejs
+      component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
@@ -230,7 +222,7 @@ commands:
         echo "Current directory: $(pwd)"
   - id: init-workspace-full
     exec:
-      component: nodejs
+      component: api
       commandLine: |
         echo "Initializing workspace with Node.js..."
         cd /projects/librechat-redhat || cd /projects || pwd
