@@ -13,6 +13,10 @@ metadata:
   version: 0.8.1-rc2
   attributes:
     tech-preview: "true"
+parent:
+  id: nodejs
+  version: 2.2.0
+  registryUrl: https://registry.devfile.io
 components:
   # Container for OpenShift CLI tasks (oc, kubectl, etc.)
   - name: api
@@ -28,10 +32,10 @@ components:
           # Keep container running
           tail -f /dev/null
   # Container for Node.js tasks (development, build, etc.)
-  # Using DevSpaces Node.js image (compatible with DevSpaces security context)
+  # Overrides parent nodejs component with custom configuration
   - name: nodejs
     container:
-      image: quay.io/devfile/node:lts
+      # Parent provides Node.js, we override with our custom config
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
