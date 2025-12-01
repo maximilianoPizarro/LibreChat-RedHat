@@ -148,12 +148,12 @@ components:
       container-overrides:
         resources:
           limits:
-            cpu: 4000m
-            memory: 12Gi
+            cpu: 2000m
+            memory: 4Gi
             # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
           requests:
-            cpu: 1000m
-            memory: 8Gi
+            cpu: 500m
+            memory: 2Gi
             # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
     container:
       image: docker.io/ollama/ollama:latest
@@ -726,7 +726,7 @@ commands:
   - id: pull-ollama-model
     exec:
       component: ollama
-      commandLine: "ollama pull llama3:8b-instruct-q4_0"
+      commandLine: "ollama pull llama3.2:3b-instruct-q4_K_M"
 events:
   postStart:
     - init-workspace

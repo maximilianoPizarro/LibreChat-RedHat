@@ -268,16 +268,17 @@ endpoints:
       # summarize: false
 
     # Ollama Example (for DevWorkspace/DevSpaces)
+    # Using llama3.2:3b-instruct-q4_K_M - lightweight model (~2GB) suitable for limited memory environments
     - name: "Ollama"
       apiKey: "${OPENAI_API_KEY}"
       baseURL: "http://127.0.0.1:11434/v1" # Adjust if Ollama is on a different host
       models:
-        default: ["llama3"] # Example models, fetch from your Ollama instance
+        default: ["llama3.2:3b-instruct"] # Lightweight model, fetch from your Ollama instance
         fetch: true
       titleConvo: true
-      titleModel: "llama3:8b-instruct-q4_"
+      titleModel: "llama3.2:3b-instruct-q4_K_M"
       summarize: false
-      summaryModel: "llama3"
+      summaryModel: "llama3.2:3b-instruct"
 
       # Summary Model: Specify the model to use if summarization is enabled.
       # summaryModel: "mistral-tiny"  # Defaults to "gpt-3.5-turbo" if omitted.
