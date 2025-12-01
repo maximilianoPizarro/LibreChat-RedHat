@@ -43,9 +43,9 @@ components:
         - name: DOMAIN
           value: http://localhost:3080
         - name: MONGO_URI
-          value: mongodb://mongodb:27017/LibreChat
+          value: mongodb://127.0.0.1:27017/LibreChat
         - name: MEILI_HOST
-          value: http://meilisearch:7700
+          value: http://127.0.0.1:7700
         - name: MEILI_MASTER_KEY
           value: librechat
         - name: MEILI_NO_ANALYTICS
@@ -246,9 +246,9 @@ commands:
         ATTEMPT=0
         while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
           # Try multiple methods to check MongoDB connectivity
-          if (command -v nc >/dev/null 2>&1 && nc -z mongodb 27017 2>/dev/null) || \
-             (command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/mongodb/27017" 2>/dev/null) || \
-             (command -v mongosh >/dev/null 2>&1 && mongosh --host mongodb --port 27017 --eval "db.adminCommand('ping')" --quiet >/dev/null 2>&1); then
+          if (command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 27017 2>/dev/null) || \
+             (command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/127.0.0.1/27017" 2>/dev/null) || \
+             (command -v mongosh >/dev/null 2>&1 && mongosh --host 127.0.0.1 --port 27017 --eval "db.adminCommand('ping')" --quiet >/dev/null 2>&1); then
             echo "✓ MongoDB is ready"
             break
           fi
@@ -271,9 +271,9 @@ commands:
           # Try multiple methods to check Meilisearch connectivity
           # First check if port is open
           PORT_OPEN=false
-          if command -v nc >/dev/null 2>&1 && nc -z meilisearch 7700 2>/dev/null; then
+          if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 7700 2>/dev/null; then
             PORT_OPEN=true
-          elif command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/meilisearch/7700" 2>/dev/null; then
+          elif command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/127.0.0.1/7700" 2>/dev/null; then
             PORT_OPEN=true
           fi
           
@@ -283,9 +283,9 @@ commands:
               # Check health endpoint with proper headers
               # Try health check with master key first, then without
               HEALTH_OK=false
-              if curl -s -f -H "Authorization: Bearer librechat" http://meilisearch:7700/health >/dev/null 2>&1; then
+              if curl -s -f -H "Authorization: Bearer librechat" http://127.0.0.1:7700/health >/dev/null 2>&1; then
                 HEALTH_OK=true
-              elif curl -s -f http://meilisearch:7700/health >/dev/null 2>&1; then
+              elif curl -s -f http://127.0.0.1:7700/health >/dev/null 2>&1; then
                 HEALTH_OK=true
               fi
               
