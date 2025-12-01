@@ -503,5 +503,4 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
-    - install-vscode-extensions
     - init-workspace
