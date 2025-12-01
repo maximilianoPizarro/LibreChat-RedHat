@@ -198,6 +198,16 @@ commands:
     exec:
       component: api
       commandLine: |
+        echo "Workspace container started successfully"
+        echo "To initialize dependencies, run: devfile init-workspace"
+        echo "To start the backend, run: devfile run"
+        # Simple check - don't fail if things aren't ready
+        cd /projects/librechat-redhat 2>/dev/null || cd /projects 2>/dev/null || true
+        echo "Current directory: $(pwd)"
+  - id: init-workspace-full
+    exec:
+      component: api
+      commandLine: |
         echo "Initializing workspace..."
         cd /projects/librechat-redhat || cd /projects || pwd
         # Install Node.js 20 if not available
@@ -336,9 +346,4 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
-    - exec:
-        component: api
-        commandLine: |
-          echo "Workspace container started successfully"
-          echo "Run 'devfile init-workspace' to install dependencies"
-          echo "Then run 'devfile run' to start the backend server"
+    - init-workspace
