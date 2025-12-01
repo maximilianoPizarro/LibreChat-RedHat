@@ -177,12 +177,12 @@ components:
   #   volume:
   #     size: 1Gi
 commands:
-  # Node.js tasks - use nodejs component (Red Hat official Node.js image)
-  - id: init
+  # Custom Node.js tasks - using different names to avoid conflicts with parent
+  - id: init-custom
     exec:
       component: nodejs
       commandLine: echo "Initializing Red Hat Chat workspace..." && npm install
-  - id: build
+  - id: build-custom
     exec:
       component: nodejs
       commandLine: |
@@ -198,7 +198,7 @@ commands:
         npm run build:packages
         echo "Building client..."
         npm run build:client
-  - id: run
+  - id: run-backend
     exec:
       component: nodejs
       commandLine: |
@@ -208,7 +208,7 @@ commands:
           npm install --legacy-peer-deps || npm install
         fi
         npm run backend:dev
-  - id: start
+  - id: start-backend
     exec:
       component: nodejs
       commandLine: |
@@ -224,7 +224,7 @@ commands:
       commandLine: |
         echo "Workspace container started successfully"
         echo "To initialize dependencies, run: devfile init-workspace-full"
-        echo "To start the backend, run: devfile run"
+        echo "To start the backend, run: devfile run-backend"
         # Simple check - don't fail if things aren't ready
         cd /projects/librechat-redhat 2>/dev/null || cd /projects 2>/dev/null || true
         echo "Current directory: $(pwd)"
@@ -259,15 +259,16 @@ commands:
           if [ $? -eq 0 ]; then
             echo "✓ Dependencies installed successfully"
           else
-            echo "✗ npm install failed. Please run 'npm install' manually."
-            exit 1
+            echo "⚠ npm install had issues. You can retry manually with: npm install"
+            # Don't exit with error to allow workspace to start
           fi
         else
-          echo "✗ package.json not found in $(pwd)"
-          exit 1
+          echo "⚠ package.json not found in $(pwd)"
+          echo "Workspace will start, but you may need to navigate to the correct directory"
+          # Don't exit with error to allow workspace to start
         fi
-        echo "✓ Workspace initialized"
-        echo "Run 'devfile run' to start the backend server"
+        echo "✓ Workspace initialization completed"
+        echo "Run 'devfile run-backend' to start the backend server"
   - id: deploy-setup
     exec:
       component: api
@@ -380,4 +381,4 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
-    - init-workspace
+    - init-workspace-full
