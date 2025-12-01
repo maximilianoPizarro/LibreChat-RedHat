@@ -112,6 +112,7 @@ components:
       command:
         - mongod
         - --noauth
+        - --bind_ip_all
       volumeMounts:
         - name: mongodb-data
           path: /data/db
@@ -237,7 +238,10 @@ commands:
         MAX_ATTEMPTS=30
         ATTEMPT=0
         while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          if nc -z mongodb 27017 2>/dev/null || timeout 2 bash -c "echo > /dev/tcp/mongodb/27017" 2>/dev/null; then
+          # Try multiple methods to check MongoDB connectivity
+          if (command -v nc >/dev/null 2>&1 && nc -z mongodb 27017 2>/dev/null) || \
+             (command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/mongodb/27017" 2>/dev/null) || \
+             (command -v mongosh >/dev/null 2>&1 && mongosh --host mongodb --port 27017 --eval "db.adminCommand('ping')" --quiet >/dev/null 2>&1); then
             echo "✓ MongoDB is ready"
             break
           fi
@@ -246,14 +250,20 @@ commands:
           sleep 2
         done
         if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-          echo "⚠ Warning: MongoDB may not be ready, but continuing anyway..."
+          echo "⚠ Warning: MongoDB may not be ready after $MAX_ATTEMPTS attempts"
+          echo "  Checking MongoDB container status..."
+          echo "  You may need to check if the MongoDB container is running and listening on 0.0.0.0:27017"
+          echo "  Continuing anyway, but connection may fail..."
         fi
         
         # Wait for Meilisearch to be ready
         echo "Waiting for Meilisearch to be ready..."
         ATTEMPT=0
         while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          if nc -z meilisearch 7700 2>/dev/null || timeout 2 bash -c "echo > /dev/tcp/meilisearch/7700" 2>/dev/null; then
+          # Try multiple methods to check Meilisearch connectivity
+          if (command -v nc >/dev/null 2>&1 && nc -z meilisearch 7700 2>/dev/null) || \
+             (command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/meilisearch/7700" 2>/dev/null) || \
+             (command -v curl >/dev/null 2>&1 && curl -s -f http://meilisearch:7700/health >/dev/null 2>&1); then
             echo "✓ Meilisearch is ready"
             break
           fi
@@ -262,7 +272,9 @@ commands:
           sleep 2
         done
         if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-          echo "⚠ Warning: Meilisearch may not be ready, but continuing anyway..."
+          echo "⚠ Warning: Meilisearch may not be ready after $MAX_ATTEMPTS attempts"
+          echo "  Checking Meilisearch container status..."
+          echo "  Continuing anyway, but connection may fail..."
         fi
         
         # Check and install dependencies

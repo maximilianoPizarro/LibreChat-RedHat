@@ -11,6 +11,7 @@ services:
       - "${PORT}:${PORT}"
     depends_on:
       - mongodb
+      - meilisearch
       # - rag_api  # Descomenta si usas RAG API (requiere OPENAI_API_KEY en .env)
     build:
       context: .
@@ -44,7 +45,7 @@ services:
       - .env
     volumes:
       - mongodb_data:/data/db
-    command: mongod --noauth
+    command: mongod --noauth --bind_ip_all
   meilisearch:
     container_name: chat-meilisearch
     image: getmeili/meilisearch:v1.12.3
