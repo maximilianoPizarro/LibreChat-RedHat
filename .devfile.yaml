@@ -145,26 +145,26 @@ components:
           path: /meili_data
   # VectorDB (pgvector) - Required for RAG API functionality
   # Note: VectorDB may have issues in some OpenShift environments
-  - name: vectordb
-    container:
-      image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
-      memoryLimit: 1Gi
-      cpuLimit: 500m
-      endpoints:
-        - name: postgres
-          targetPort: 5432
-          exposure: none
-          protocol: tcp
-      env:
-        - name: POSTGRES_DB
-          value: mydatabase
-        - name: POSTGRES_USER
-          value: myuser
-        - name: POSTGRES_PASSWORD
-          value: mypassword
-      volumeMounts:
-        - name: pg-data
-          path: /var/lib/postgresql/data
+  #- name: vectordb
+  #  container:
+  #    image: docker.io/pgvector/pgvector:0.8.0-pg15-trixie
+  #    memoryLimit: 1Gi
+  #    cpuLimit: 500m
+  #    endpoints:
+  #      - name: postgres
+  #        targetPort: 5432
+  #        exposure: none
+  #        protocol: tcp
+  #    env:
+  #      - name: POSTGRES_DB
+  #        value: mydatabase
+  #      - name: POSTGRES_USER
+  #        value: myuser
+  #      - name: POSTGRES_PASSWORD
+  #        value: mypassword
+  #    volumeMounts:
+  #      - name: pg-data
+  #        path: /var/lib/postgresql/data
   # - name: rag-api
   #   container:
   #     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
