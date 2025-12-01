@@ -18,7 +18,7 @@ components:
   # Uses universal developer image with all tools included (oc, kubectl, node, npm, etc.)
   - name: api
     container:
-      image: quay.io/devfile/base-developer-image:ubi9-latest
+      image: quay.io/devfile/universal-developer-image:ubi9
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
@@ -162,7 +162,14 @@ commands:
   - id: init-custom
     exec:
       component: api
-      commandLine: echo "Initializing Red Hat Chat workspace..." && npm install
+      commandLine: |
+        echo "Initializing Red Hat Chat workspace..."
+        # Ensure Node.js is available
+        if ! command -v node &> /dev/null; then
+          echo "Node.js not found. Please run 'devfile init-workspace-full' first to install Node.js"
+          exit 1
+        fi
+        npm install
   - id: build-custom
     exec:
       component: api
@@ -184,6 +191,11 @@ commands:
       component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
+        # Ensure Node.js is available
+        if ! command -v node &> /dev/null; then
+          echo "Node.js not found. Please run 'devfile init-workspace-full' first to install Node.js"
+          exit 1
+        fi
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
           echo "Dependencies not installed. Installing now..."
           npm install --legacy-peer-deps || npm install
@@ -194,6 +206,11 @@ commands:
       component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
+        # Ensure Node.js is available
+        if ! command -v node &> /dev/null; then
+          echo "Node.js not found. Please run 'devfile init-workspace-full' first to install Node.js"
+          exit 1
+        fi
         if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
           echo "Dependencies not installed. Installing now..."
           npm install --legacy-peer-deps || npm install
@@ -227,10 +244,47 @@ commands:
         echo "Initializing workspace with Node.js..."
         cd /projects/librechat-redhat || cd /projects || pwd
         
-        # Verify Node.js and npm are available
+        # Install Node.js if not available
         if ! command -v node &> /dev/null; then
-          echo "✗ Node.js not found. The base image should include Node.js."
-          echo "Please check the container image or install Node.js manually."
+          echo "Node.js not found. Installing Node.js 20..."
+          
+          # Check if we have sudo/dnf access
+          if command -v dnf &> /dev/null; then
+            # Try without sudo first (in case we're root)
+            if dnf install -y nodejs npm 2>/dev/null; then
+              echo "✓ Node.js installed successfully"
+            elif sudo dnf install -y nodejs npm 2>/dev/null; then
+              echo "✓ Node.js installed successfully (with sudo)"
+            else
+              # Try NodeSource repository
+              echo "Trying NodeSource repository..."
+              curl -fsSL https://rpm.nodesource.com/setup_20.x | bash - 2>/dev/null || \
+                curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash - 2>/dev/null || {
+                echo "⚠ Failed to add NodeSource repository"
+                echo "Trying EPEL repository..."
+                dnf install -y epel-release 2>/dev/null || sudo dnf install -y epel-release 2>/dev/null
+                dnf install -y nodejs npm 2>/dev/null || sudo dnf install -y nodejs npm 2>/dev/null || {
+                  echo "✗ Failed to install Node.js automatically"
+                  echo "Please install manually: sudo dnf install -y nodejs npm"
+                  exit 1
+                }
+              }
+              # Install after adding repository
+              dnf install -y nodejs npm 2>/dev/null || sudo dnf install -y nodejs npm 2>/dev/null || {
+                echo "✗ Failed to install Node.js after adding repository"
+                exit 1
+              }
+            fi
+          else
+            echo "✗ dnf not found. Cannot install Node.js automatically"
+            exit 1
+          fi
+        fi
+        
+        # Verify Node.js is now available
+        if ! command -v node &> /dev/null; then
+          echo "✗ Node.js installation failed or not in PATH"
+          echo "Please install Node.js manually"
           exit 1
         fi
         
