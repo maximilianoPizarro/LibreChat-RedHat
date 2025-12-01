@@ -28,9 +28,10 @@ components:
           # Keep container running
           tail -f /dev/null
   # Container for Node.js tasks (development, build, etc.)
+  # Using DevSpaces Node.js image (compatible with DevSpaces security context)
   - name: nodejs
     container:
-      image: registry.access.redhat.com/ubi8/nodejs-20:latest
+      image: quay.io/devfile/node:lts
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
