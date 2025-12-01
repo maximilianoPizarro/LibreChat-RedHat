@@ -267,6 +267,18 @@ endpoints:
       # Summarize setting: Set to true to enable summarization.
       # summarize: false
 
+    # Ollama Example (for DevWorkspace/DevSpaces)
+    - name: "Ollama"
+      apiKey: "${OPENAI_API_KEY}"
+      baseURL: "http://127.0.0.1:11434/v1" # Adjust if Ollama is on a different host
+      models:
+        default: ["llama3"] # Example models, fetch from your Ollama instance
+        fetch: true
+      titleConvo: true
+      titleModel: "llama3:8b-instruct-q4_"
+      summarize: false
+      summaryModel: "llama3"
+
       # Summary Model: Specify the model to use if summarization is enabled.
       # summaryModel: "mistral-tiny"  # Defaults to "gpt-3.5-turbo" if omitted.
 
@@ -388,24 +400,33 @@ endpoints:
 #         endpoint: "openAI"
 #         model: "gpt-4o-mini"
 
-# fileConfig:
-#   endpoints:
-#     assistants:
-#       fileLimit: 5
-#       fileSizeLimit: 10  # Maximum size for an individual file in MB
-#       totalSizeLimit: 50  # Maximum total size for all files in a single request in MB
-#       supportedMimeTypes:
-#         - "image/.*"
-#         - "application/pdf"
-#     openAI:
-#       disabled: true  # Disables file uploading to the OpenAI endpoint
-#     default:
-#       totalSizeLimit: 20
-#     YourCustomEndpointName:
-#       fileLimit: 2
-#       fileSizeLimit: 5
-#   serverFileSizeLimit: 100  # Global server file size limit in MB
-#   avatarSizeLimit: 2  # Limit for user avatar image size in MB
+# File configuration
+fileConfig:
+  endpoints:
+    assistants:
+      fileLimit: 5
+      fileSizeLimit: 10  # Maximum size for an individual file in MB
+      totalSizeLimit: 50  # Maximum total size for all files in a single request in MB
+      supportedMimeTypes:
+        - "image/.*"
+        - "application/pdf"
+    openAI:
+      disabled: true  # Disables file uploading to the OpenAI endpoint
+    default:
+      totalSizeLimit: 20
+    YourCustomEndpointName:
+      fileLimit: 2
+      fileSizeLimit: 5
+  serverFileSizeLimit: 100  # Global server file size limit in MB
+  avatarSizeLimit: 2  # Limit for user avatar image size in MB
+
+# Rate limits configuration (uncomment to enable)
+rateLimits:
+  fileUploads:
+    ipMax: 100
+    ipWindowInMinutes: 60  # Rate limit window for file uploads per IP
+    userMax: 50
+    userWindowInMinutes: 60  # Rate limit window for file uploads per user
 #   imageGeneration: # Image Gen settings, either percentage or px
 #     percentage: 100
 #     px: 1024

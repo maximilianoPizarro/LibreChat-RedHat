@@ -143,6 +143,28 @@ components:
       volumeMounts:
         - name: meili-data
           path: /meili_data
+  - name: ollama
+    attributes:
+      container-overrides:
+        resources:
+          limits:
+            cpu: 4000m
+            memory: 12Gi
+            # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
+          requests:
+            cpu: 1000m
+            memory: 8Gi
+            # nvidia.com/gpu: 1 # Uncomment this if the pod shall be scheduled only on a GPU node
+    container:
+      image: docker.io/ollama/ollama:latest
+      mountSources: true
+      sourceMapping: /.ollama
+      endpoints:
+        - name: ollama
+          targetPort: 11434
+          exposure: internal
+          protocol: http
+          path: /
   # VectorDB (pgvector) - Required for RAG API functionality
   # Note: VectorDB may have issues in some OpenShift environments
   #- name: vectordb
@@ -367,6 +389,16 @@ commands:
             exit 1
           }
         fi
+        
+        # Check if client is built
+        if [ ! -f client/dist/index.html ]; then
+          echo "Client not built. Building now..."
+          npm run build:client || {
+            echo "⚠ Failed to build client. Please run 'npm run build:client' manually"
+            echo "⚠ Continuing anyway, but the application may not work correctly..."
+          }
+        fi
+        
         echo "Starting backend server..."
         npm run backend:dev
   - id: start-backend
@@ -565,6 +597,20 @@ commands:
           echo "✓ .env file exists"
         fi
         
+        # Check if librechat.yaml file exists, create from example if missing
+        if [ ! -f librechat.yaml ]; then
+          echo "⚠ librechat.yaml file not found. Creating from librechat.example.yaml..."
+          if [ -f librechat.example.yaml ]; then
+            cp librechat.example.yaml librechat.yaml
+            echo "✓ librechat.yaml file created from librechat.example.yaml"
+            echo "⚠ Please update librechat.yaml with your actual configuration values if needed"
+          else
+            echo "⚠ librechat.example.yaml not found. Please create librechat.yaml manually"
+          fi
+        else
+          echo "✓ librechat.yaml file exists"
+        fi
+        
         echo "✓ Workspace initialization completed"
         echo "Run 'devfile run-backend' to start the backend server"
   - id: deploy-setup
@@ -677,6 +723,11 @@ commands:
         echo ""
         echo "=== PipelineRuns ==="
         oc get pipelineruns -n $NAMESPACE
+  - id: pull-ollama-model
+    exec:
+      component: ollama
+      commandLine: "ollama pull llama3:8b-instruct-q4_0"
 events:
   postStart:
     - init-workspace
+    - pull-ollama-model
