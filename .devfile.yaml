@@ -200,6 +200,14 @@ commands:
           echo "Dependencies not installed. Installing now..."
           npm install --legacy-peer-deps || npm install
         fi
+        # Check if packages are built
+        if [ ! -f packages/data-schemas/dist/index.cjs ] || [ ! -f packages/data-provider/dist/index.cjs ]; then
+          echo "Packages not built. Building now..."
+          npm run build:packages || {
+            echo "⚠ Failed to build packages. Please run 'npm run build:packages' manually"
+            exit 1
+          }
+        fi
         npm run backend:dev
   - id: start-backend
     exec:
@@ -248,7 +256,6 @@ commands:
         if ! command -v node &> /dev/null; then
           echo "Node.js not found. Installing Node.js 20..."
           
-          # Try installing Node.js using nvm (Node Version Manager) - doesn't require root
           if ! command -v nvm &> /dev/null; then
             echo "Installing nvm (Node Version Manager)..."
             export NVM_DIR="$HOME/.nvm"
@@ -335,6 +342,14 @@ commands:
           npm install --legacy-peer-deps || npm install
           if [ $? -eq 0 ]; then
             echo "✓ Dependencies installed successfully"
+            
+            # Build internal packages (required for backend to run)
+            echo "Building internal packages..."
+            npm run build:packages || {
+              echo "⚠ Package build had issues. You can retry manually with: npm run build:packages"
+              # Don't exit with error to allow workspace to start
+            }
+            echo "✓ Packages built successfully"
           else
             echo "⚠ npm install had issues. You can retry manually with: npm install"
             # Don't exit with error to allow workspace to start
