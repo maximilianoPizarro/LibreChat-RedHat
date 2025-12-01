@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "redhat.vscode-openshift-connector",
+    "redhat.vscode-yaml",
+    "ms-kubernetes-tools.vscode-kubernetes-tools",
+    "ms-vscode-remote.remote-containers",
+    "ms-azuretools.vscode-docker",
+    "redhat.vscode-tekton-pipelines",
+    "ms-vscode.vscode-json"
+  ],
+  "unwantedRecommendations": []
+}
+

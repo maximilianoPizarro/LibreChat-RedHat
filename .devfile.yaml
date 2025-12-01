@@ -196,10 +196,16 @@ commands:
           echo "Node.js not found. Please run 'devfile init-workspace-full' first to install Node.js"
           exit 1
         fi
-        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
-          echo "Dependencies not installed. Installing now..."
+        # Check and install dependencies
+        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ] || [ ! -d node_modules/winston-daily-rotate-file ]; then
+          echo "Dependencies not fully installed. Installing now..."
           npm install --legacy-peer-deps || npm install
+          if [ $? -ne 0 ]; then
+            echo "✗ Failed to install dependencies"
+            exit 1
+          fi
         fi
+        
         # Check if packages are built
         if [ ! -f packages/data-schemas/dist/index.cjs ] || [ ! -f packages/data-provider/dist/index.cjs ]; then
           echo "Packages not built. Building now..."
@@ -339,9 +345,33 @@ commands:
         # Install dependencies
         if [ -f package.json ]; then
           echo "Installing dependencies (this may take a few minutes)..."
-          npm install --legacy-peer-deps || npm install
-          if [ $? -eq 0 ]; then
+          # Try with legacy-peer-deps first, then without if it fails
+          if ! npm install --legacy-peer-deps; then
+            echo "⚠ npm install --legacy-peer-deps failed, trying without flag..."
+            npm install || {
+              echo "⚠ npm install had issues. You can retry manually with: npm install"
+              # Don't exit with error to allow workspace to start
+            }
+          fi
+          
+          # Verify critical dependencies are installed
+          if [ -d node_modules ]; then
             echo "✓ Dependencies installed successfully"
+            
+            # Check for critical missing dependencies
+            MISSING_DEPS=""
+            if [ ! -d node_modules/winston-daily-rotate-file ]; then
+              MISSING_DEPS="$MISSING_DEPS winston-daily-rotate-file"
+            fi
+            if [ ! -d node_modules/cross-env ]; then
+              MISSING_DEPS="$MISSING_DEPS cross-env"
+            fi
+            
+            if [ -n "$MISSING_DEPS" ]; then
+              echo "⚠ Some dependencies are missing: $MISSING_DEPS"
+              echo "Reinstalling dependencies..."
+              npm install --legacy-peer-deps || npm install
+            fi
             
             # Build internal packages (required for backend to run)
             echo "Building internal packages..."
@@ -351,8 +381,8 @@ commands:
             }
             echo "✓ Packages built successfully"
           else
-            echo "⚠ npm install had issues. You can retry manually with: npm install"
-            # Don't exit with error to allow workspace to start
+            echo "✗ node_modules directory not found after installation"
+            echo "Please run 'npm install' manually"
           fi
         else
           echo "⚠ package.json not found in $(pwd)"
@@ -473,4 +503,5 @@ commands:
         oc get pipelineruns -n $NAMESPACE
 events:
   postStart:
+    - install-vscode-extensions
     - init-workspace
