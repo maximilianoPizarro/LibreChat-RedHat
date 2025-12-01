@@ -15,10 +15,10 @@ metadata:
     tech-preview: "true"
 components:
   # Main container for both OpenShift CLI and Node.js tasks
-  # Uses universal developer image with all tools included (oc, kubectl, node, npm, etc.)
+  # Uses base developer image (includes oc, kubectl) - Node.js will be installed via init-workspace-full
   - name: api
     container:
-      image: quay.io/devfile/universal-developer-image:ubi9
+      image: quay.io/devfile/base-developer-image:ubi9-latest
       memoryLimit: 2Gi
       cpuLimit: 1000m
       cpuRequest: 250m
