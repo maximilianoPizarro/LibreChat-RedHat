@@ -130,6 +130,12 @@ export default defineConfig(({ command }) => ({
           /^@librechat\/client/,
           // Exclude peer dependencies that are external
           'lucide-react',
+          // React and react-dom must be externalized to use from import map
+          // This prevents multiple React instances which causes "Cannot read properties of null" errors
+          'react',
+          'react-dom',
+          'react/jsx-runtime',
+          'react/jsx-dev-runtime',
         ],
       output: {
         manualChunks(id: string) {

@@ -1,0 +1,105 @@
+# Frontend Dockerfile - Red Hat UBI9 with httpd (Simple version)
+# v0.8.1-rc2
+# This version assumes client/dist is already built locally
+# Use this if you've already run: npm run frontend (or npm run build:client)
+
+FROM registry.redhat.io/ubi9/httpd-24:latest
+
+# Create directory for mounted volume
+# The volume mount in docker-compose will override this during runtime
+RUN mkdir -p /var/www/html && \
+    echo "<html><body>Frontend will be mounted as volume</body></html>" > /var/www/html/index.html
+# Note: client/dist is mounted as volume, so COPY is not needed
+# If you want to include it in the image (without volume), uncomment:
+# COPY client/dist /var/www/html
+
+# Enable mod_rewrite for SPA routing
+RUN sed -i 's/#LoadModule rewrite_module modules\/mod_rewrite.so/LoadModule rewrite_module modules\/mod_rewrite.so/' /etc/httpd/conf.modules.d/00-base.conf || \
+    echo "LoadModule rewrite_module modules/mod_rewrite.so" >> /etc/httpd/conf.modules.d/00-base.conf
+
+# Configure httpd for SPA
+RUN echo -e "\
+# MIME types for JavaScript modules\n\
+AddType application/javascript js\n\
+AddType application/javascript mjs\n\
+AddType application/javascript jsx\n\
+AddType text/javascript js\n\
+AddType text/javascript mjs\n\
+\n\
+<Directory /var/www/html>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride None\n\
+    Require all granted\n\
+    # SPA fallback - serve index.html for all routes EXCEPT:\n\
+    # - Files that exist (handled by default)\n\
+    # - API routes\n\
+    # - Static assets with extensions\n\
+    # - Module specifiers (paths starting with /@ or /npm/)\n\
+    # - Bare module specifiers (single word paths like /react, /react-dom)\n\
+    RewriteEngine On\n\
+    # Don't rewrite if file exists\n\
+    RewriteCond %{REQUEST_FILENAME} -f [OR]\n\
+    RewriteCond %{REQUEST_FILENAME} -d\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite API routes\n\
+    RewriteCond %{REQUEST_URI} ^/api/\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite static assets (files with extensions)\n\
+    RewriteCond %{REQUEST_URI} \\.(js|mjs|jsx|css|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|mp3|mp4|webm|gz)$ [NC]\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite module specifiers\n\
+    RewriteCond %{REQUEST_URI} ^/@ [OR]\n\
+    RewriteCond %{REQUEST_URI} ^/npm/\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite bare module specifiers (these should be resolved by import map)\n\
+    # Return 404 for bare module specifiers so browser can use import map\n\
+    RewriteCond %{REQUEST_URI} ^/[a-zA-Z0-9@_-]+$\n\
+    RewriteRule ^ - [R=404,L]\n\
+    # Rewrite everything else to index.html\n\
+    RewriteRule ^ /index.html [L]\n\
+</Directory>\n\
+\n\
+# Enable CORS if needed (adjust as necessary)\n\
+<IfModule mod_headers.c>\n\
+    Header set Access-Control-Allow-Origin \"*\"\n\
+    Header set Access-Control-Allow-Methods \"GET, POST, OPTIONS\"\n\
+    Header set Access-Control-Allow-Headers \"Content-Type, Authorization\"\n\
+</IfModule>\n\
+\n\
+# Cache static assets\n\
+<IfModule mod_expires.c>\n\
+    ExpiresActive On\n\
+    ExpiresByType text/css \"access plus 1 year\"\n\
+    ExpiresByType application/javascript \"access plus 1 year\"\n\
+    ExpiresByType text/javascript \"access plus 1 year\"\n\
+    ExpiresByType image/png \"access plus 1 year\"\n\
+    ExpiresByType image/jpeg \"access plus 1 year\"\n\
+    ExpiresByType image/gif \"access plus 1 year\"\n\
+    ExpiresByType image/svg+xml \"access plus 1 year\"\n\
+    ExpiresByType image/webp \"access plus 1 year\"\n\
+    ExpiresByType font/woff2 \"access plus 1 year\"\n\
+    ExpiresByType font/woff \"access plus 1 year\"\n\
+</IfModule>\n\
+" > /etc/httpd/conf.d/spa.conf
+
+# Disable SSL configuration if certificates are not provided
+RUN if [ -f /etc/httpd/conf.d/ssl.conf ]; then \
+        mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.disabled; \
+    fi
+
+# Set permissions for OpenShift (works with arbitrary user IDs)
+# OpenShift runs containers with random UIDs, so we use group permissions
+USER root
+RUN chgrp -R 0 /var/www/html /var/run/httpd /var/log/httpd && \
+    chmod -R g+rwX /var/www/html /var/run/httpd /var/log/httpd && \
+    find /var/www/html -type d -exec chmod g+s {} +
+
+# Switch to non-root user (OpenShift will override this with arbitrary UID)
+USER 1001
+
+# Expose port 8080 (httpd default)
+EXPOSE 8080
+
+# Start httpd
+CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]
+

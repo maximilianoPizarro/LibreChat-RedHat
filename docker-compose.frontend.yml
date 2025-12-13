@@ -1,0 +1,102 @@
+# Docker Compose configuration for separated frontend and backend
+# Frontend runs on httpd (port 8080)
+# Backend runs on Node.js (port 3080)
+
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.simple  # Usa la versión simple que copia client/dist
+      # Para construir en el contenedor, cambia a: dockerfile: Dockerfile.frontend
+    container_name: librechat-frontend
+    ports:
+      - "8080:8080"
+    environment:
+      - BACKEND_URL=http://backend:3080
+    networks:
+      - librechat-network
+    volumes:
+      # Montar client/dist como volumen para actualizaciones sin reconstruir
+      - type: bind
+        source: ./client/dist
+        target: /var/www/html
+    restart: unless-stopped
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: librechat-backend
+    ports:
+      - "3080:3080"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3080
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - MEILI_HOST=http://meilisearch:7700
+      # Add your other environment variables here
+      # - RAG_API_URL=http://rag_api:8000
+      # - etc.
+    networks:
+      - librechat-network
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - meilisearch
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/api/logs
+      - ./images:/app/client/public/images
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3080/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mongodb:
+    image: mongo:latest
+    container_name: librechat-mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - librechat-network
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    command: mongod --noauth
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12.3
+    container_name: librechat-meilisearch
+    ports:
+      - "7700:7700"
+    networks:
+      - librechat-network
+    restart: unless-stopped
+    environment:
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+    volumes:
+      - meili_data:/meili_data
+
+networks:
+  librechat-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  meili_data:
+

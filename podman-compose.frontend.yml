@@ -1,0 +1,145 @@
+# Podman Compose configuration for Red Hat Chat with separated frontend
+# This file includes frontend (httpd) and backend (Node.js) as separate services
+# Usage: podman compose -f ./podman-compose.frontend.yml up -d
+
+services:
+  frontend:
+    container_name: RedHatChat-Frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.simple.public  # Usa imagen oficial de Red Hat
+      # Requiere autenticación: podman login registry.redhat.io
+      # Para versión pública sin auth, crea Dockerfile.frontend.simple.alpine usando httpd:2.4-alpine
+      tags:
+        - quay.io/maximilianopizarro/librechat-redhat-frontend:latest
+        - quay.io/maximilianopizarro/librechat-redhat-frontend:v0.8.1-rc2
+    ports:
+      - "8080:8080"  # Red Hat httpd usa puerto 8080
+    networks:
+      - librechat-network
+    volumes:
+      # Montar client/dist como volumen para actualizaciones sin reconstruir
+      - type: bind
+        source: ./client/dist
+        target: /var/www/html
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  api:
+    container_name: RedHatChat-Backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      tags:
+        - quay.io/maximilianopizarro/librechat-redhat-api:latest
+        - quay.io/maximilianopizarro/librechat-redhat-api:v0.8.1-rc2
+    ports:
+      - "${PORT:-3080}:3080"
+    depends_on:
+      - mongodb
+      - meilisearch
+      - frontend
+    restart: always
+    extra_hosts:
+      - "host.podman.internal:host-gateway"
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - MEILI_HOST=http://meilisearch:7700
+      - RAG_PORT=${RAG_PORT:-8000}
+      - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
+      - FRONTEND_SEPARATE=true
+    networks:
+      - librechat-network
+    volumes:
+      - type: bind
+        source: ./.env
+        target: /app/.env
+      - type: bind
+        source: ./librechat.yaml
+        target: /app/librechat.yaml
+        read_only: true
+      - images_data:/app/client/public/images
+      - uploads_data:/app/uploads
+      - logs_data:/app/api/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3080/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mongodb:
+    container_name: chat-mongodb
+    image: mongo
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - librechat-network
+    volumes:
+      - mongodb_data:/data/db
+    command: mongod --noauth --bind_ip_all
+
+  meilisearch:
+    container_name: chat-meilisearch
+    image: getmeili/meilisearch:v1.12.3
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+    networks:
+      - librechat-network
+    volumes:
+      - meili_data_v1.12:/meili_data
+
+  vectordb:
+    container_name: vectordb
+    image: pgvector/pgvector:0.8.0-pg15-trixie
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    restart: always
+    networks:
+      - librechat-network
+    volumes:
+      - pgdata2:/var/lib/postgresql/data
+
+  # RAG API - Descomenta si necesitas funcionalidad RAG (requiere OPENAI_API_KEY en .env)
+  # rag_api:
+  #   container_name: rag_api
+  #   image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+  #   environment:
+  #     - DB_HOST=vectordb
+  #     - RAG_PORT=${RAG_PORT:-8000}
+  #   restart: always
+  #   depends_on:
+  #     - vectordb
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - librechat-network
+
+networks:
+  librechat-network:
+    driver: bridge
+
+volumes:
+  pgdata2:
+  meili_data_v1.12:
+  mongodb_data:
+  images_data:
+  uploads_data:
+  logs_data:
+

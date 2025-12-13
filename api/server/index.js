@@ -34,7 +34,8 @@ const { PORT, HOST, ALLOW_SOCIAL_LOGIN, DISABLE_COMPRESSION, TRUST_PROXY } = pro
 
 // Allow PORT=0 to be used for automatic free port assignment
 const port = isNaN(Number(PORT)) ? 3080 : Number(PORT);
-const host = HOST || 'localhost';
+// Default to 0.0.0.0 for containerized deployments and external access
+const host = HOST || '0.0.0.0';
 const trusted_proxy = Number(TRUST_PROXY) || 1; /* trust first proxy by default */
 
 const app = express();
@@ -60,21 +61,33 @@ const startServer = async () => {
   await updateInterfacePermissions(appConfig);
 
   // Check if dist exists, if not, try to use client/index.html as fallback in development
+  // If frontend is in a separate container (FRONTEND_SEPARATE=true), skip serving frontend
   let indexPath = path.join(appConfig.paths.dist, 'index.html');
-  if (!fs.existsSync(indexPath) && process.env.NODE_ENV === 'development') {
+  let indexHTML = null;
+  
+  if (process.env.FRONTEND_SEPARATE === 'true') {
+    logger.info('Frontend is in a separate container, backend will only serve API routes');
+    indexHTML = '<!DOCTYPE html><html><head><title>LibreChat API</title></head><body><h1>LibreChat API Server</h1><p>Frontend is served from a separate container.</p></body></html>';
+  } else if (!fs.existsSync(indexPath) && process.env.NODE_ENV === 'development') {
     const fallbackPath = path.join(appConfig.paths.clientPath, 'index.html');
     if (fs.existsSync(fallbackPath)) {
       logger.warn(`client/dist/index.html not found, using ${fallbackPath} as fallback in development mode`);
       indexPath = fallbackPath;
+      indexHTML = fs.readFileSync(indexPath, 'utf8');
     } else {
-      throw new Error(`Neither ${indexPath} nor ${fallbackPath} exist. Please build the client first with 'npm run build:client'`);
+      logger.warn(`Neither ${indexPath} nor ${fallbackPath} exist. Frontend may be in a separate container.`);
+      indexHTML = '<!DOCTYPE html><html><head><title>LibreChat API</title></head><body><h1>LibreChat API Server</h1><p>Frontend not found. If using separate containers, set FRONTEND_SEPARATE=true.</p></body></html>';
     }
+  } else if (fs.existsSync(indexPath)) {
+    indexHTML = fs.readFileSync(indexPath, 'utf8');
+  } else {
+    logger.warn(`client/dist/index.html not found. Frontend may be in a separate container. Set FRONTEND_SEPARATE=true to suppress this warning.`);
+    indexHTML = '<!DOCTYPE html><html><head><title>LibreChat API</title></head><body><h1>LibreChat API Server</h1><p>Frontend not found. If using separate containers, set FRONTEND_SEPARATE=true.</p></body></html>';
   }
-  let indexHTML = fs.readFileSync(indexPath, 'utf8');
 
   // In order to provide support to serving the application in a sub-directory
   // We need to update the base href if the DOMAIN_CLIENT is specified and not the root path
-  if (process.env.DOMAIN_CLIENT) {
+  if (process.env.DOMAIN_CLIENT && indexHTML && !indexHTML.includes('LibreChat API Server')) {
     const clientUrl = new URL(process.env.DOMAIN_CLIENT);
     const baseHref = clientUrl.pathname.endsWith('/')
       ? clientUrl.pathname
@@ -127,15 +140,344 @@ const startServer = async () => {
     if (req.path === '/assets/@librechat/client/') {
       return res.redirect(301, '/assets/@librechat/client/index.es.js');
     }
+    // Handle /npm/ paths - redirect to CDN URLs
+    // These requests occur when browsers try to resolve npm package subpaths
+    if (req.path.startsWith('/npm/')) {
+      return res.redirect(301, `https://cdn.jsdelivr.net${req.path}`);
+    }
+    // Handle bare module specifiers - redirect to CDN URLs from import map
+    // This helps browsers that try to load modules before import map is processed
+    if (req.path === '/lucide-react' || req.path.startsWith('/lucide-react/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/lucide-react@0.394.0/dist/esm/lucide-react.js');
+    }
+    if (req.path === '/clsx' || req.path.startsWith('/clsx/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/clsx@2.1.1/+esm');
+    }
+    if (req.path === '/tailwind-merge' || req.path.startsWith('/tailwind-merge/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/tailwind-merge@1.9.1/+esm');
+    }
+    if (req.path === '/class-variance-authority' || req.path.startsWith('/class-variance-authority/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/class-variance-authority@0.7.1/+esm');
+    }
+    if (req.path === '/zod' || req.path.startsWith('/zod/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/zod/')) {
+        const subpath = req.path.replace('/zod', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/zod@3.22.4${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/zod@3.22.4/+esm');
+    }
+    if (req.path === '/recoil' || req.path.startsWith('/recoil/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/recoil/')) {
+        const subpath = req.path.replace('/recoil', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/recoil@0.7.7${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/recoil@0.7.7/+esm');
+    }
+    if (req.path.startsWith('/@ariakit/')) {
+      // Handle @ariakit packages
+      if (req.path === '/@ariakit/react' || req.path.startsWith('/@ariakit/react/')) {
+        // For subpaths like /@ariakit/react/select, redirect to the CDN with the subpath and +esm
+        if (req.path.startsWith('/@ariakit/react/')) {
+          const subpath = req.path.replace('/@ariakit/react', '');
+          // If subpath doesn't end with .js, add +esm for ESM module resolution
+          if (!subpath.endsWith('.js')) {
+            return res.redirect(301, `https://cdn.jsdelivr.net/npm/@ariakit/react@0.4.15${subpath}/+esm`);
+          }
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@ariakit/react@0.4.15${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@ariakit/react@0.4.15/+esm');
+      }
+      if (req.path === '/@ariakit/react-core' || req.path.startsWith('/@ariakit/react-core/')) {
+        // For subpaths like /@ariakit/react-core/select/select-renderer, redirect to the CDN with the subpath
+        if (req.path.startsWith('/@ariakit/react-core/')) {
+          const subpath = req.path.replace('/@ariakit/react-core', '');
+          // Special handling for select/select-renderer - use +esm to resolve via export map
+          if (subpath === '/select/select-renderer') {
+            return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@ariakit/react-core@0.4.17/select/select-renderer/+esm');
+          }
+          // For other subpaths, if they don't end with .js, add +esm for ESM module resolution
+          if (!subpath.endsWith('.js')) {
+            return res.redirect(301, `https://cdn.jsdelivr.net/npm/@ariakit/react-core@0.4.17${subpath}/+esm`);
+          }
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@ariakit/react-core@0.4.17${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@ariakit/react-core@0.4.17/+esm');
+      }
+    }
+    if (req.path.startsWith('/@dicebear/')) {
+      // Handle @dicebear packages
+      if (req.path === '/@dicebear/core' || req.path.startsWith('/@dicebear/core/')) {
+        // For subpaths, redirect to the CDN with the subpath
+        if (req.path.startsWith('/@dicebear/core/')) {
+          const subpath = req.path.replace('/@dicebear/core', '');
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@dicebear/core@9.2.2${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@dicebear/core@9.2.2/+esm');
+      }
+      if (req.path === '/@dicebear/collection' || req.path.startsWith('/@dicebear/collection/')) {
+        // For subpaths, redirect to the CDN with the subpath
+        if (req.path.startsWith('/@dicebear/collection/')) {
+          const subpath = req.path.replace('/@dicebear/collection', '');
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@dicebear/collection@9.2.2${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@dicebear/collection@9.2.2/+esm');
+      }
+    }
+    if (req.path === '/@headlessui/react' || req.path.startsWith('/@headlessui/react/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/@headlessui/react/')) {
+        const subpath = req.path.replace('/@headlessui/react', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/@headlessui/react@2.1.2${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@headlessui/react@2.1.2/+esm');
+    }
+    if (req.path === '/@marsidev/react-turnstile' || req.path.startsWith('/@marsidev/react-turnstile/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@marsidev/react-turnstile@1.1.0/+esm');
+    }
+    if (req.path === '/@mcp-ui/client' || req.path.startsWith('/@mcp-ui/client/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@mcp-ui/client@5.7.0/+esm');
+    }
+    if (req.path === '/@codesandbox/sandpack-react' || req.path.startsWith('/@codesandbox/sandpack-react/')) {
+      // For subpaths like /@codesandbox/sandpack-react/unstyled, redirect to the CDN with the subpath
+      if (req.path.startsWith('/@codesandbox/sandpack-react/')) {
+        const subpath = req.path.replace('/@codesandbox/sandpack-react', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/@codesandbox/sandpack-react@2.19.10${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@codesandbox/sandpack-react@2.19.10/+esm');
+    }
+    if (req.path === '/@codesandbox/sandpack-client' || req.path.startsWith('/@codesandbox/sandpack-client/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@codesandbox/sandpack-client@2.19.10/+esm');
+    }
+    if (req.path === '/@react-spring/web' || req.path.startsWith('/@react-spring/web/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/@react-spring/web/')) {
+        const subpath = req.path.replace('/@react-spring/web', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/@react-spring/web@9.7.5${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@react-spring/web@9.7.5/+esm');
+    }
+    if (req.path.startsWith('/@tanstack/')) {
+      // Handle @tanstack packages
+      if (req.path === '/@tanstack/react-query' || req.path.startsWith('/@tanstack/react-query/')) {
+        // For subpaths, redirect to the CDN with the subpath
+        if (req.path.startsWith('/@tanstack/react-query/')) {
+          const subpath = req.path.replace('/@tanstack/react-query', '');
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@tanstack/react-query@4.28.0${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@tanstack/react-query@4.28.0/+esm');
+      }
+      if (req.path === '/@tanstack/react-table' || req.path.startsWith('/@tanstack/react-table/')) {
+        // For subpaths, redirect to the CDN with the subpath
+        if (req.path.startsWith('/@tanstack/react-table/')) {
+          const subpath = req.path.replace('/@tanstack/react-table', '');
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@tanstack/react-table@8.11.7${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@tanstack/react-table@8.11.7/+esm');
+      }
+      if (req.path === '/@tanstack/react-virtual' || req.path.startsWith('/@tanstack/react-virtual/')) {
+        // For subpaths, redirect to the CDN with the subpath
+        if (req.path.startsWith('/@tanstack/react-virtual/')) {
+          const subpath = req.path.replace('/@tanstack/react-virtual', '');
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/@tanstack/react-virtual@3.0.0${subpath}`);
+        }
+        return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@tanstack/react-virtual@3.0.0/+esm');
+      }
+    }
+    if (req.path === '/react-router-dom' || req.path.startsWith('/react-router-dom/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/react-router-dom/')) {
+        const subpath = req.path.replace('/react-router-dom', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/react-router-dom@6.11.2${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-router-dom@6.11.2/+esm');
+    }
+    if (req.path === '/react-dnd' || req.path.startsWith('/react-dnd/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-dnd@16.0.1/+esm');
+    }
+    if (req.path === '/react-dnd-html5-backend' || req.path.startsWith('/react-dnd-html5-backend/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-dnd-html5-backend@16.0.1/+esm');
+    }
+    if (req.path === '/i18next' || req.path.startsWith('/i18next/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/i18next/')) {
+        const subpath = req.path.replace('/i18next', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/i18next@24.2.2${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/i18next@24.2.2/+esm');
+    }
+    if (req.path === '/react-i18next' || req.path.startsWith('/react-i18next/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/react-i18next/')) {
+        const subpath = req.path.replace('/react-i18next', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/react-i18next@15.4.0${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-i18next@15.4.0/+esm');
+    }
+    if (req.path === '/framer-motion' || req.path.startsWith('/framer-motion/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/framer-motion@11.5.4/+esm');
+    }
+    if (req.path === '/react-hook-form' || req.path.startsWith('/react-hook-form/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/react-hook-form/')) {
+        const subpath = req.path.replace('/react-hook-form', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/react-hook-form@7.43.9${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-hook-form@7.43.9/+esm');
+    }
+    if (req.path === '/react-markdown' || req.path.startsWith('/react-markdown/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/react-markdown/')) {
+        const subpath = req.path.replace('/react-markdown', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/react-markdown@9.0.1${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-markdown@9.0.1/+esm');
+    }
+    if (req.path === '/jotai' || req.path.startsWith('/jotai/')) {
+      // For subpaths like /jotai/utils, redirect to the CDN with the subpath and +esm
+      if (req.path.startsWith('/jotai/')) {
+        const subpath = req.path.replace('/jotai', '');
+        // If subpath doesn't end with .js, add +esm for ESM module resolution
+        if (!subpath.endsWith('.js')) {
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/jotai@2.12.5${subpath}/+esm`);
+        }
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/jotai@2.12.5${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/jotai@2.12.5/+esm');
+    }
+    if (req.path === '/lodash' || req.path.startsWith('/lodash/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/lodash@4.17.21/+esm');
+    }
+    if (req.path === '/date-fns' || req.path.startsWith('/date-fns/')) {
+      // For subpaths, redirect to the CDN with the subpath
+      if (req.path.startsWith('/date-fns/')) {
+        const subpath = req.path.replace('/date-fns', '');
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/date-fns@3.3.1${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/date-fns@3.3.1/+esm');
+    }
+    if (req.path === '/js-cookie' || req.path.startsWith('/js-cookie/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/+esm');
+    }
+    if (req.path === '/copy-to-clipboard' || req.path.startsWith('/copy-to-clipboard/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/copy-to-clipboard@3.3.3/+esm');
+    }
+    if (req.path === '/match-sorter' || req.path.startsWith('/match-sorter/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/match-sorter@8.1.0/+esm');
+    }
+    if (req.path === '/rc-input-number' || req.path.startsWith('/rc-input-number/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/rc-input-number@7.4.2/+esm');
+    }
+    if (req.path === '/react-textarea-autosize' || req.path.startsWith('/react-textarea-autosize/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-textarea-autosize@8.4.0/+esm');
+    }
+    if (req.path === '/react-avatar-editor' || req.path.startsWith('/react-avatar-editor/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-avatar-editor@13.0.2/+esm');
+    }
+    if (req.path === '/react-flip-toolkit' || req.path.startsWith('/react-flip-toolkit/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-flip-toolkit@7.1.0/+esm');
+    }
+    if (req.path === '/react-lazy-load-image-component' || req.path.startsWith('/react-lazy-load-image-component/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-lazy-load-image-component@1.6.0/+esm');
+    }
+    if (req.path === '/react-resizable-panels' || req.path.startsWith('/react-resizable-panels/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-resizable-panels@3.0.6/+esm');
+    }
+    if (req.path === '/react-speech-recognition' || req.path.startsWith('/react-speech-recognition/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-speech-recognition@3.10.0/+esm');
+    }
+    if (req.path === '/react-transition-group' || req.path.startsWith('/react-transition-group/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-transition-group@4.4.5/+esm');
+    }
+    if (req.path === '/react-virtualized' || req.path.startsWith('/react-virtualized/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-virtualized@9.22.6/+esm');
+    }
+    if (req.path === '/qrcode.react' || req.path.startsWith('/qrcode.react/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/qrcode.react@4.2.0/+esm');
+    }
+    if (req.path === '/sse.js' || req.path.startsWith('/sse.js/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/sse.js@2.5.0/+esm');
+    }
+    if (req.path === '/heic-to' || req.path.startsWith('/heic-to/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/heic-to@1.1.14/+esm');
+    }
+    if (req.path === '/html-to-image' || req.path.startsWith('/html-to-image/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/+esm');
+    }
+    if (req.path === '/input-otp' || req.path.startsWith('/input-otp/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/input-otp@1.4.2/+esm');
+    }
+    if (req.path === '/downloadjs' || req.path.startsWith('/downloadjs/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/+esm');
+    }
+    if (req.path === '/export-from-json' || req.path.startsWith('/export-from-json/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/export-from-json@1.7.2/+esm');
+    }
+    if (req.path === '/filenamify' || req.path.startsWith('/filenamify/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/filenamify@6.0.0/+esm');
+    }
+    if (req.path === '/i18next-browser-languagedetector' || req.path.startsWith('/i18next-browser-languagedetector/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.0.3/+esm');
+    }
+    if (req.path === '/regenerator-runtime' || req.path.startsWith('/regenerator-runtime/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/regenerator-runtime@0.14.1/+esm');
+    }
+    if (req.path === '/rehype-highlight' || req.path.startsWith('/rehype-highlight/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/rehype-highlight@6.0.0/+esm');
+    }
+    if (req.path === '/rehype-katex' || req.path.startsWith('/rehype-katex/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/rehype-katex@6.0.3/+esm');
+    }
+    if (req.path === '/remark-directive' || req.path.startsWith('/remark-directive/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/remark-directive@3.0.0/+esm');
+    }
+    if (req.path === '/remark-gfm' || req.path.startsWith('/remark-gfm/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/remark-gfm@4.0.0/+esm');
+    }
+    if (req.path === '/remark-math' || req.path.startsWith('/remark-math/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/remark-math@6.0.0/+esm');
+    }
+    if (req.path === '/remark-supersub' || req.path.startsWith('/remark-supersub/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/remark-supersub@1.0.0/+esm');
+    }
+    if (req.path === '/micromark-extension-llm-math' || req.path.startsWith('/micromark-extension-llm-math/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/micromark-extension-llm-math@3.1.0/+esm');
+    }
+    if (req.path === '/dompurify' || req.path.startsWith('/dompurify/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/dompurify@3.2.6/+esm');
+    }
+    if (req.path === '/react-gtm-module' || req.path.startsWith('/react-gtm-module/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-gtm-module@2.0.11/+esm');
+    }
+    if (req.path.startsWith('/@radix-ui/react-icons/')) {
+      // Handle @radix-ui/react-icons subpaths (for individual icons)
+      const subpath = req.path.replace('/@radix-ui/react-icons', '');
+      return res.redirect(301, `https://cdn.jsdelivr.net/npm/@radix-ui/react-icons@1.3.0${subpath}`);
+    }
+    if (req.path === '/react' || req.path.startsWith('/react/')) {
+      // For subpaths like /react/jsx-runtime, redirect to the CDN with the subpath
+      if (req.path.startsWith('/react/')) {
+        const subpath = req.path.replace('/react', '');
+        // Special handling for jsx-runtime - use +esm to resolve via export map
+        if (subpath === '/jsx-runtime') {
+          return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react@18.2.0/jsx-runtime/+esm');
+        }
+        // For other subpaths, if they don't end with .js, add +esm for ESM module resolution
+        if (!subpath.endsWith('.js')) {
+          return res.redirect(301, `https://cdn.jsdelivr.net/npm/react@18.2.0${subpath}/+esm`);
+        }
+        return res.redirect(301, `https://cdn.jsdelivr.net/npm/react@18.2.0${subpath}`);
+      }
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react@18.2.0/+esm');
+    }
+    if (req.path === '/react-dom' || req.path.startsWith('/react-dom/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/react-dom@18.2.0/+esm');
+    }
     // Handle module specifiers that should be resolved via import map
     // These should return 404 to let the browser use the import map
     if (req.path.startsWith('/@')) {
       // Other @ routes should be handled by import map or return 404
-      return res.status(404).send('Module not found - should be resolved via import map');
-    }
-    // Handle bare module specifiers (like "lucide-react", "react", etc.)
-    // These should also be resolved via import map, return 404 to let browser handle it
-    if (req.path === '/lucide-react' || req.path.startsWith('/lucide-react/')) {
       return res.status(404).send('Module not found - should be resolved via import map');
     }
     next();
@@ -197,41 +539,61 @@ const startServer = async () => {
   // But exclude static assets and API routes
   // IMPORTANT: This must be the LAST middleware to ensure static files are served first
   // Express static middleware will call next() if file not found, so we need to check if response was already sent
-  app.use((req, res, next) => {
-    // Skip if it's an API route, static asset, or has a file extension
-    // Also check for common asset paths including /src/ (for Vite dev server compatibility)
-    // Also skip routes starting with /@ (import map module specifiers)
-    if (
-      req.path.startsWith('/api/') ||
-      req.path.startsWith('/oauth/') ||
-      req.path.startsWith('/images/') ||
-      req.path.startsWith('/assets/') ||
-      req.path.startsWith('/fonts/') ||
-      req.path.startsWith('/src/') ||
-      req.path.startsWith('/@') || // Import map module specifiers (e.g., /@librechat/client)
-      req.path.match(/\.(js|mjs|jsx|css|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|mp3|mp4|webm|gz)$/i)
-    ) {
-      // If it's a static file path but wasn't found by static middleware, return 404
-      // Check if response was already sent (file was found and served)
-      if (!res.headersSent) {
-        return res.status(404).send('File not found');
+  // Skip SPA fallback if frontend is in a separate container
+  if (indexHTML && process.env.FRONTEND_SEPARATE !== 'true') {
+    app.use((req, res, next) => {
+      // Skip if it's an API route, static asset, or has a file extension
+      // Also check for common asset paths including /src/ (for Vite dev server compatibility)
+      // Also skip routes starting with /@ (import map module specifiers)
+      if (
+        req.path.startsWith('/api/') ||
+        req.path.startsWith('/oauth/') ||
+        req.path.startsWith('/images/') ||
+        req.path.startsWith('/assets/') ||
+        req.path.startsWith('/fonts/') ||
+        req.path.startsWith('/src/') ||
+        req.path.startsWith('/npm/') || // npm package paths (handled by redirect middleware)
+        req.path.startsWith('/@') || // Import map module specifiers (e.g., /@librechat/client)
+        req.path.match(/\.(js|mjs|jsx|css|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|mp3|mp4|webm|gz)$/i)
+      ) {
+        // If it's a static file path but wasn't found by static middleware, return 404
+        // Check if response was already sent (file was found and served)
+        if (!res.headersSent) {
+          return res.status(404).send('File not found');
+        }
+        return;
       }
-      return;
-    }
 
-    res.set({
-      'Cache-Control': process.env.INDEX_CACHE_CONTROL || 'no-cache, no-store, must-revalidate',
-      Pragma: process.env.INDEX_PRAGMA || 'no-cache',
-      Expires: process.env.INDEX_EXPIRES || '0',
+      res.set({
+        'Cache-Control': process.env.INDEX_CACHE_CONTROL || 'no-cache, no-store, must-revalidate',
+        Pragma: process.env.INDEX_PRAGMA || 'no-cache',
+        Expires: process.env.INDEX_EXPIRES || '0',
+      });
+
+      const lang = req.cookies.lang || req.headers['accept-language']?.split(',')[0] || 'en-US';
+      const saneLang = lang.replace(/"/g, '&quot;');
+      let updatedIndexHtml = indexHTML.replace(/lang="en-US"/g, `lang="${saneLang}"`);
+
+      res.type('html');
+      res.send(updatedIndexHtml);
     });
-
-    const lang = req.cookies.lang || req.headers['accept-language']?.split(',')[0] || 'en-US';
-    const saneLang = lang.replace(/"/g, '&quot;');
-    let updatedIndexHtml = indexHTML.replace(/lang="en-US"/g, `lang="${saneLang}"`);
-
-    res.type('html');
-    res.send(updatedIndexHtml);
-  });
+  } else if (process.env.FRONTEND_SEPARATE === 'true') {
+    // If frontend is separate, only serve API routes and return 404 for everything else
+    app.use((req, res) => {
+      if (
+        req.path.startsWith('/api/') ||
+        req.path.startsWith('/oauth/') ||
+        req.path.startsWith('/images/') ||
+        req.path.startsWith('/health')
+      ) {
+        // These routes are handled by other middleware
+        return;
+      }
+      if (!res.headersSent) {
+        res.status(404).send('Not found. Frontend is served from a separate container.');
+      }
+    });
+  }
 
   app.listen(port, host, async () => {
     if (host === '0.0.0.0') {

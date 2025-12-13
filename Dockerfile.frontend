@@ -1,0 +1,92 @@
+# Frontend Dockerfile - Red Hat UBI9 with httpd
+# v0.8.1-rc2
+# This version builds the frontend inside the container
+# For a simpler version that uses pre-built dist, see Dockerfile.frontend.simple
+
+# Build stage - Use Red Hat UBI9 Node.js image
+FROM registry.redhat.io/ubi9/nodejs-20:latest AS builder
+
+WORKDIR /app
+USER root
+RUN chown 1001:0 /app
+USER 1001
+
+# Copy dependency files first for better layer caching
+COPY package.json package-lock.json ./
+COPY client/package.json ./client/package.json
+COPY packages/client/package.json ./packages/client/package.json
+COPY packages/data-provider/package.json ./packages/data-provider/package.json
+COPY packages/data-schemas/package.json ./packages/data-schemas/package.json
+COPY packages/api/package.json ./packages/api/package.json
+
+# Install dependencies
+RUN npm config set fetch-retry-maxtimeout 600000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 15000 && \
+    npm ci --only=production=false
+
+# Copy source code and build
+COPY --chown=1001:1001 . .
+
+# Build frontend (this runs: npm run build:data-provider && npm run build:data-schemas && npm run build:api && npm run build:client-package && cd client && npm run build)
+RUN NODE_OPTIONS="--max-old-space-size=2048" npm run frontend
+
+# Production stage - Use Red Hat UBI9 httpd image
+FROM registry.redhat.io/ubi9/httpd-24:latest
+
+# Copy built application (frontend dist) from builder stage
+COPY --from=builder /app/client/dist /var/www/html
+
+# Create httpd configuration for SPA
+RUN echo -e "\
+<Directory /var/www/html>\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride None\n\
+    Require all granted\n\
+    # SPA fallback - serve index.html for all routes\n\
+    FallbackResource /index.html\n\
+</Directory>\n\
+\n\
+# Enable CORS if needed (adjust as necessary)\n\
+<IfModule mod_headers.c>\n\
+    Header set Access-Control-Allow-Origin \"*\"\n\
+    Header set Access-Control-Allow-Methods \"GET, POST, OPTIONS\"\n\
+    Header set Access-Control-Allow-Headers \"Content-Type, Authorization\"\n\
+</IfModule>\n\
+\n\
+# Cache static assets\n\
+<IfModule mod_expires.c>\n\
+    ExpiresActive On\n\
+    ExpiresByType text/css \"access plus 1 year\"\n\
+    ExpiresByType application/javascript \"access plus 1 year\"\n\
+    ExpiresByType image/png \"access plus 1 year\"\n\
+    ExpiresByType image/jpeg \"access plus 1 year\"\n\
+    ExpiresByType image/gif \"access plus 1 year\"\n\
+    ExpiresByType image/svg+xml \"access plus 1 year\"\n\
+    ExpiresByType image/webp \"access plus 1 year\"\n\
+    ExpiresByType font/woff2 \"access plus 1 year\"\n\
+    ExpiresByType font/woff \"access plus 1 year\"\n\
+</IfModule>\n\
+" > /etc/httpd/conf.d/spa.conf
+
+# Disable SSL configuration if certificates are not provided
+RUN if [ -f /etc/httpd/conf.d/ssl.conf ]; then \
+        mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.conf.disabled; \
+    fi
+
+# Set permissions for OpenShift (works with arbitrary user IDs)
+# OpenShift runs containers with random UIDs, so we use group permissions
+USER root
+RUN chgrp -R 0 /var/www/html /var/run/httpd /var/log/httpd && \
+    chmod -R g+rwX /var/www/html /var/run/httpd /var/log/httpd && \
+    find /var/www/html -type d -exec chmod g+s {} +
+
+# Switch to non-root user (OpenShift will override this with arbitrary UID)
+USER 1001
+
+# Expose port 8080 (httpd default)
+EXPOSE 8080
+
+# Start httpd
+CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]
+
