@@ -17,14 +17,27 @@ done
 # Try to switch to user 1001 if it exists, otherwise run as root
 if id -u 1001 >/dev/null 2>&1; then
     # User exists, try to switch to it
-    if command -v runuser >/dev/null 2>&1 && runuser -u 1001 -- id >/dev/null 2>&1; then
-        exec runuser -u 1001 -- "$@"
+    if command -v runuser >/dev/null 2>&1; then
+        # Try runuser first (preferred method)
+        if runuser -u 1001 -- id >/dev/null 2>&1; then
+            exec runuser -u 1001 -- "$@"
+        else
+            # runuser failed, fall back to root
+            exec "$@"
+        fi
     elif command -v su >/dev/null 2>&1; then
-        # Use su with correct syntax: su -s shell user -c "command"
-        # Pass all arguments correctly using sh -c with proper quoting
-        exec su -s /bin/bash 1001 sh -c "exec \"\$@\"" sh "$@"
+        # Use su with correct syntax - try to switch, but fall back to root on failure
+        # Test if we can switch to the user first
+        if su -s /bin/bash 1001 -c "id" >/dev/null 2>&1; then
+            # User can be switched to, execute command as that user
+            # Use sh -c to properly handle arguments
+            exec su -s /bin/bash 1001 -c "exec \"\$@\"" -- sh "$@"
+        else
+            # su failed, run as root
+            exec "$@"
+        fi
     else
-        # Can't switch, run as root
+        # No user switching command available, run as root
         exec "$@"
     fi
 else

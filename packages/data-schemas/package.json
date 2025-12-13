@@ -17,9 +17,9 @@
     "dist"
   ],
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && rollup -c --silent --bundleConfigAsCjs",
-    "build:watch": "rollup -c -w",
+    "clean": "npx --yes rimraf dist",
+    "build": "npm run clean && npx --yes rollup -c --silent --bundleConfigAsCjs",
+    "build:watch": "npx --yes rollup -c -w",
     "test": "jest --coverage --watch",
     "test:ci": "jest --coverage --ci",
     "verify": "npm run test:ci",

@@ -28,9 +28,8 @@ RUN uv --version || echo "Warning: uv installation check failed, but continuing.
 # Create user 1001 (for UBI8 compatibility)
 # Create volume mount points early for better cache usage
 RUN mkdir -p /app && \
-    groupadd -r -g 1001 appgroup 2>/dev/null || true && \
-    useradd -r -u 1001 -g 1001 -d /app -s /bin/bash appuser 2>/dev/null || \
-    (groupadd -g 1001 appgroup && useradd -r -u 1001 -g appgroup -d /app -s /bin/bash appuser) || true && \
+    (getent group 1001 >/dev/null 2>&1 || groupadd -r -g 1001 appgroup) && \
+    (getent passwd 1001 >/dev/null 2>&1 || useradd -r -u 1001 -g 1001 -d /app -s /bin/bash appuser) && \
     mkdir -p /app/client/public/images /app/api/logs /app/uploads && \
     chown -R 1001:1001 /app && \
     chmod -R 775 /app/client/public/images /app/api/logs /app/uploads

@@ -20,6 +20,35 @@ function staticCache(staticPath, options = {}) {
   const { noCache = false, skipGzipScan = false } = options;
 
   const setHeaders = (res, filePath) => {
+    // Set correct MIME types for JavaScript modules - CRITICAL for ES modules
+    // This MUST be set in ALL environments, not just production
+    if (filePath) {
+      const ext = path.extname(filePath).toLowerCase();
+      // Always set MIME type for JavaScript files (including modules)
+      if (ext === '.js' || ext === '.mjs' || ext === '.jsx') {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      } else if (ext === '.css') {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (ext === '.json') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      } else if (ext === '.png') {
+        res.setHeader('Content-Type', 'image/png');
+      } else if (ext === '.jpg' || ext === '.jpeg') {
+        res.setHeader('Content-Type', 'image/jpeg');
+      } else if (ext === '.svg') {
+        res.setHeader('Content-Type', 'image/svg+xml');
+      } else if (ext === '.ico') {
+        res.setHeader('Content-Type', 'image/x-icon');
+      } else if (ext === '.woff' || ext === '.woff2') {
+        res.setHeader('Content-Type', `font/${ext === 'woff2' ? 'woff2' : 'woff'}`);
+      } else if (ext === '.ttf') {
+        res.setHeader('Content-Type', 'font/ttf');
+      } else if (ext === '.eot') {
+        res.setHeader('Content-Type', 'application/vnd.ms-fontobject');
+      }
+    }
+
+    // Cache headers only apply in production
     if (process.env.NODE_ENV?.toLowerCase() !== 'production') {
       return;
     }

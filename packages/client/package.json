@@ -16,10 +16,10 @@
     "dist"
   ],
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && rollup -c --bundleConfigAsCjs",
-    "build:watch": "rollup -c -w --bundleConfigAsCjs",
-    "dev": "rollup -c -w --bundleConfigAsCjs"
+    "clean": "npx --yes rimraf dist",
+    "build": "npm run clean && npx --yes rollup -c --bundleConfigAsCjs",
+    "build:watch": "npx --yes rollup -c -w --bundleConfigAsCjs",
+    "dev": "npx --yes rollup -c -w --bundleConfigAsCjs"
   },
   "peerDependencies": {
     "@ariakit/react": "^0.4.16",

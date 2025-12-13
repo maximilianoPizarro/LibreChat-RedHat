@@ -50,24 +50,30 @@ export default defineConfig(({ command }) => ({
           'assets/favicon*.png',
           'assets/icon-*.png',
           'assets/apple-touch-icon*.png',
-          'assets/maskable-icon.png',
-          'manifest.webmanifest',
         ],
         globIgnores: [
           'images/**/*',
           '**/*.map',
-          'index.html',
           'sw.js',
           'workbox-*.js',
         ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
-        // Exclude node_modules and packages from being scanned
-        exclude: [
-          /node_modules/,
-          /packages/,
-          /\.map$/,
+        navigateFallback: '/index.html',
+        // Ensure index.html is precached for navigateFallback to work
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'jsdelivr-cdn',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+              },
+            },
+          },
         ],
+        navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
       },
       includeAssets: [],
       manifest: {
@@ -116,14 +122,15 @@ export default defineConfig(({ command }) => ({
     sourcemap: process.env.NODE_ENV === 'development',
     outDir: './dist',
     minify: 'terser',
-    rollupOptions: {
-      preserveEntrySignatures: 'strict',
-      external: [
-        // Exclude packages/client from being processed - it's already built
-        /^@librechat\/client/,
-        // Exclude peer dependencies that are external
-        'lucide-react',
-      ],
+      rollupOptions: {
+        preserveEntrySignatures: 'strict',
+        external: [
+          // @librechat/client is externalized - it will be resolved via import map
+          // The server handles /@ routes to allow import map resolution
+          /^@librechat\/client/,
+          // Exclude peer dependencies that are external
+          'lucide-react',
+        ],
       output: {
         manualChunks(id: string) {
           const normalizedId = id.replace(/\\/g, '/');
@@ -272,11 +279,46 @@ export default defineConfig(({ command }) => ({
     chunkSizeWarningLimit: 1500,
   },
   resolve: {
-    alias: {
-      '~': path.join(__dirname, 'src/'),
-      $fonts: path.resolve(__dirname, 'public/fonts'),
-      'micromark-extension-math': 'micromark-extension-llm-math',
-    },
+    alias: [
+      {
+        find: '~',
+        replacement: path.join(__dirname, 'src/'),
+      },
+      {
+        find: '$fonts',
+        replacement: path.resolve(__dirname, 'public/fonts'),
+      },
+      {
+        find: 'micromark-extension-math',
+        replacement: 'micromark-extension-llm-math',
+      },
+      // Resolve local workspace packages - handle subpaths correctly
+      // Must match exact subpath first, then the base package
+      {
+        find: /^@librechat\/client$/,
+        replacement: path.resolve(__dirname, '../packages/client/dist/index.es.js'),
+      },
+      {
+        find: /^@librechat\/client\//,
+        replacement: path.resolve(__dirname, '../packages/client/dist/'),
+      },
+      {
+        find: /^librechat-data-provider\/react-query$/,
+        replacement: path.resolve(__dirname, '../packages/data-provider/dist/react-query/index.es.js'),
+      },
+      {
+        find: /^librechat-data-provider\/react-query\//,
+        replacement: path.resolve(__dirname, '../packages/data-provider/dist/react-query/'),
+      },
+      {
+        find: /^librechat-data-provider$/,
+        replacement: path.resolve(__dirname, '../packages/data-provider/dist/index.es.js'),
+      },
+      {
+        find: /^librechat-data-provider\//,
+        replacement: path.resolve(__dirname, '../packages/data-provider/dist/'),
+      },
+    ],
   },
 }));
 

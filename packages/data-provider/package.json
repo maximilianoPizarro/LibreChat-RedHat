@@ -18,10 +18,10 @@
     }
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && rollup -c --silent --bundleConfigAsCjs",
-    "build:watch": "rollup -c -w",
-    "rollup:api": "npx rollup -c server-rollup.config.js --bundleConfigAsCjs",
+    "clean": "npx --yes rimraf dist",
+    "build": "npm run clean && npx --yes rollup -c --silent --bundleConfigAsCjs",
+    "build:watch": "npx --yes rollup -c -w",
+    "rollup:api": "npx --yes rollup -c server-rollup.config.js --bundleConfigAsCjs",
     "test": "jest --coverage --watch",
     "test:ci": "jest --coverage --ci",
     "verify": "npm run test:ci",

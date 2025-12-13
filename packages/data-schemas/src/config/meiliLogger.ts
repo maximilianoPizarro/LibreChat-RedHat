@@ -1,5 +1,14 @@
 import winston from 'winston';
-import 'winston-daily-rotate-file';
+// Import DailyRotateFile directly instead of relying on side-effect
+// Handle different export patterns from winston-daily-rotate-file
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const winstonDailyRotateFileModule = require('winston-daily-rotate-file');
+// winston-daily-rotate-file may export as default, named export, or modify winston.transports
+const DailyRotateFile = 
+  winstonDailyRotateFileModule?.default || 
+  winstonDailyRotateFileModule?.DailyRotateFile || 
+  winstonDailyRotateFileModule ||
+  (winston.transports.DailyRotateFile as any);
 import { getLogDirectory } from './utils';
 
 const logDir = getLogDirectory();
@@ -42,7 +51,7 @@ const fileFormat = winston.format.combine(
 
 const logLevel = useDebugLogging ? 'debug' : 'error';
 const transports: winston.transport[] = [
-  new winston.transports.DailyRotateFile({
+  new DailyRotateFile({
     level: logLevel,
     filename: `${logDir}/meiliSync-%DATE%.log`,
     datePattern: 'YYYY-MM-DD',

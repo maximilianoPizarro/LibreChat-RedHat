@@ -101,9 +101,45 @@ const startServer = async () => {
     console.warn('Response compression has been disabled via DISABLE_COMPRESSION.');
   }
 
+  // Serve static files - order matters: dist first, then fonts, then assets
+  // These middleware will call next() if file not found, allowing fallback to SPA
   app.use(staticCache(appConfig.paths.dist));
   app.use(staticCache(appConfig.paths.fonts));
   app.use(staticCache(appConfig.paths.assets));
+  
+  // Add explicit route for /src/* to serve from dist/src/*
+  // This handles Vite's dev server paths in production
+  app.use('/src', staticCache(appConfig.paths.dist));
+  
+  // Handle import map module specifiers (routes starting with /@)
+  // Redirect to the actual file path based on import map resolution
+  app.use((req, res, next) => {
+    if (req.path === '/@librechat/client' || req.path === '/@librechat/client/') {
+      // Redirect exact match to the specific file
+      return res.redirect(301, '/assets/@librechat/client/index.es.js');
+    }
+    if (req.path.startsWith('/@librechat/client/')) {
+      // Redirect subpaths to the corresponding path in assets
+      const targetPath = req.path.replace('/@librechat/client', '/assets/@librechat/client');
+      return res.redirect(301, targetPath);
+    }
+    // Handle /assets/@librechat/client/ (with trailing slash) - redirect to index.es.js
+    if (req.path === '/assets/@librechat/client/') {
+      return res.redirect(301, '/assets/@librechat/client/index.es.js');
+    }
+    // Handle module specifiers that should be resolved via import map
+    // These should return 404 to let the browser use the import map
+    if (req.path.startsWith('/@')) {
+      // Other @ routes should be handled by import map or return 404
+      return res.status(404).send('Module not found - should be resolved via import map');
+    }
+    // Handle bare module specifiers (like "lucide-react", "react", etc.)
+    // These should also be resolved via import map, return 404 to let browser handle it
+    if (req.path === '/lucide-react' || req.path.startsWith('/lucide-react/')) {
+      return res.status(404).send('Module not found - should be resolved via import map');
+    }
+    next();
+  });
 
   if (!ALLOW_SOCIAL_LOGIN) {
     console.warn('Social logins are disabled. Set ALLOW_SOCIAL_LOGIN=true to enable them.');
@@ -157,7 +193,32 @@ const startServer = async () => {
 
   app.use(ErrorController);
 
-  app.use((req, res) => {
+  // SPA fallback - serve index.html for all unmatched routes
+  // But exclude static assets and API routes
+  // IMPORTANT: This must be the LAST middleware to ensure static files are served first
+  // Express static middleware will call next() if file not found, so we need to check if response was already sent
+  app.use((req, res, next) => {
+    // Skip if it's an API route, static asset, or has a file extension
+    // Also check for common asset paths including /src/ (for Vite dev server compatibility)
+    // Also skip routes starting with /@ (import map module specifiers)
+    if (
+      req.path.startsWith('/api/') ||
+      req.path.startsWith('/oauth/') ||
+      req.path.startsWith('/images/') ||
+      req.path.startsWith('/assets/') ||
+      req.path.startsWith('/fonts/') ||
+      req.path.startsWith('/src/') ||
+      req.path.startsWith('/@') || // Import map module specifiers (e.g., /@librechat/client)
+      req.path.match(/\.(js|mjs|jsx|css|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|mp3|mp4|webm|gz)$/i)
+    ) {
+      // If it's a static file path but wasn't found by static middleware, return 404
+      // Check if response was already sent (file was found and served)
+      if (!res.headersSent) {
+        return res.status(404).send('File not found');
+      }
+      return;
+    }
+
     res.set({
       'Cache-Control': process.env.INDEX_CACHE_CONTROL || 'no-cache, no-store, must-revalidate',
       Pragma: process.env.INDEX_PRAGMA || 'no-cache',

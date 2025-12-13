@@ -13,11 +13,11 @@
     }
   },
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && rollup -c --bundleConfigAsCjs",
-    "build:dev": "npm run clean && NODE_ENV=development rollup -c --bundleConfigAsCjs",
-    "build:watch": "NODE_ENV=development rollup -c -w --bundleConfigAsCjs",
-    "build:watch:prod": "rollup -c -w --bundleConfigAsCjs",
+    "clean": "npx --yes rimraf dist",
+    "build": "npm run clean && npx --yes rollup -c --bundleConfigAsCjs",
+    "build:dev": "npm run clean && NODE_ENV=development npx --yes rollup -c --bundleConfigAsCjs",
+    "build:watch": "NODE_ENV=development npx --yes rollup -c -w --bundleConfigAsCjs",
+    "build:watch:prod": "npx --yes rollup -c -w --bundleConfigAsCjs",
     "test": "jest --coverage --watch --testPathIgnorePatterns=\"\\.*integration\\.|\\.*helper\\.\"",
     "test:ci": "jest --coverage --ci --testPathIgnorePatterns=\"\\.*integration\\.|\\.*helper\\.\"",
     "test:cache-integration:core": "jest --testPathPatterns=\"src/cache/.*\\.cache_integration\\.spec\\.ts$\" --coverage=false",

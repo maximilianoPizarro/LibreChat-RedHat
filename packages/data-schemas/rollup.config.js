@@ -26,7 +26,12 @@ export default {
     // Resolve modules from node_modules
     nodeResolve(),
     // Convert CommonJS modules to ES6
-    commonjs(),
+    // Configure commonjs to preserve require() calls for peer dependencies
+    commonjs({
+      include: ['node_modules/**'],
+      // Preserve require() calls for externalized modules
+      transformMixedEsModules: true,
+    }),
     // Compile TypeScript files and generate type declarations
     typescript({
       tsconfig: './tsconfig.json',
@@ -36,5 +41,5 @@ export default {
     }),
   ],
   // Do not bundle these external dependencies
-  external: ['mongoose'],
+  external: ['mongoose', 'winston-daily-rotate-file'],
 };
