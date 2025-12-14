@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { OGDialogTemplate, OGDialog, OGDialogTrigger, Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { OGDialogTemplate, OGDialog, OGDialogTrigger } from '@librechat/client';
 import ArchivedChatsTable from './ArchivedChatsTable';
 import { useLocalize } from '~/hooks';
 
@@ -20,7 +21,7 @@ export default function ArchivedChats() {
           title={localize('com_nav_archived_chats')}
           className="max-w-[1000px]"
           showCancelButton={false}
-          main={<ArchivedChatsTable isOpen={isOpen} onOpenChange={setIsOpen} />}
+          main={<ArchivedChatsTable onOpenChange={setIsOpen} />}
         />
       </OGDialog>
     </div>

@@ -1,4 +1,4 @@
-import { Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
 import { useNavigate } from 'react-router-dom';
 import { useLocalize } from '~/hooks';
 

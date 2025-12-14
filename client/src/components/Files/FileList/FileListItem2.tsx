@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileIcon, PlusIcon } from 'lucide-react';
-import { Button, DotsIcon, TrashIcon } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { DotsIcon, TrashIcon } from '@librechat/client';
 import type { TFile } from 'librechat-data-provider';
 import { useNavigate } from 'react-router-dom';
 

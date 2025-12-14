@@ -37,6 +37,7 @@
     "@dicebear/core": "^9.2.2",
     "@headlessui/react": "^2.1.2",
     "@librechat/client": "*",
+    "@lit-labs/react": "^2.1.3",
     "@marsidev/react-turnstile": "^1.1.0",
     "@mcp-ui/client": "^5.7.0",
     "@radix-ui/react-accordion": "^1.1.2",
@@ -58,6 +59,8 @@
     "@radix-ui/react-tabs": "^1.0.3",
     "@radix-ui/react-toast": "^1.1.5",
     "@react-spring/web": "^9.7.5",
+    "@rhds/elements": "^4.0.0",
+    "@rhds/tokens": "^3.0.2",
     "@tanstack/react-query": "^4.28.0",
     "@tanstack/react-table": "^8.11.7",
     "class-variance-authority": "^0.7.1",
@@ -112,8 +115,7 @@
     "tailwind-merge": "^1.9.1",
     "tailwindcss-animate": "^1.0.5",
     "tailwindcss-radix": "^2.8.0",
-    "zod": "^3.22.4",
-    "@rhds/elements": "^4.0.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@babel/plugin-transform-runtime": "^7.22.15",

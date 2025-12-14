@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Button, Input, Label, OGDialog, OGDialogTemplate } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Input, Label, OGDialog, OGDialogTemplate } from '@librechat/client';
 import type { ConfigFieldDetail } from '~/common';
 import { useLocalize } from '~/hooks';
 

@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import React, { useMemo, useCallback, useRef, useState } from 'react';
-import { Button, useToastContext } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { useToastContext } from '@librechat/client';
 import { useWatch, useForm, FormProvider, type FieldNamesMarkedBoolean } from 'react-hook-form';
 import { useGetModelsQuery } from 'librechat-data-provider/react-query';
 import {

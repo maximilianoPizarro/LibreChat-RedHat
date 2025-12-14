@@ -124,6 +124,126 @@ const startServer = async () => {
   // This handles Vite's dev server paths in production
   app.use('/src', staticCache(appConfig.paths.dist));
   
+  // Proxy for @rhds/tokens/media.js - handle missing file gracefully
+  app.get('/npm/@rhds/tokens@3.0.2/media.js', (req, res) => {
+    // media.js doesn't exist in @rhds/tokens@3.0.2, return empty module
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send('// @rhds/tokens/media.js is not available in version 3.0.2\n// This is a placeholder to prevent 404 errors\nexport default {};');
+  });
+
+  // Proxy for @patternfly/pfe-core@2.14.0 - intercept CDN requests
+  // This handles requests that browsers make directly to CDN via import maps
+  app.get('/npm/@patternfly/pfe-core@2.14.0/*', async (req, res) => {
+    try {
+      const targetPath = req.path.replace('/npm/@patternfly/pfe-core@2.14.0', '/npm/@patternfly/pfe-core@5.0.3');
+      const targetUrl = `https://cdn.jsdelivr.net${targetPath}`;
+      logger.debug(`Proxying @patternfly/pfe-core@2.14.0 request: ${targetUrl}`);
+      
+      const response = await axios.get(targetUrl, { 
+        responseType: 'arraybuffer', // Use arraybuffer to check content before streaming
+        validateStatus: () => true, // Accept all status codes
+        maxRedirects: 5,
+        timeout: 10000
+      });
+      
+      // Check if response is HTML (404 page or error)
+      const contentType = response.headers['content-type'] || '';
+      let isHTML = contentType.includes('text/html') || response.status === 404 || response.status >= 400;
+      
+      // Check content if we have data
+      if (response.data && !isHTML) {
+        try {
+          const buffer = Buffer.from(response.data);
+          const preview = buffer.toString('utf8', 0, Math.min(200, buffer.length));
+          isHTML = preview.includes('<!DOCTYPE') || 
+                   preview.includes('<html') || 
+                   preview.includes('<body') ||
+                   preview.trim().startsWith('<');
+        } catch (e) {
+          // If we can't check, assume it's not HTML if status is OK
+          isHTML = response.status >= 400;
+        }
+      }
+      
+      if (isHTML || response.status >= 400) {
+        logger.warn(`CDN returned HTML/error (${response.status}) for ${targetUrl}, Content-Type: ${contentType}, returning empty module`);
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send('// Module not found or error, placeholder to prevent errors\nexport default {};');
+      }
+      
+      // Return the actual JavaScript content
+      res.setHeader('Content-Type', contentType || 'application/javascript; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.send(response.data);
+    } catch (error) {
+      logger.error(`Proxy error for @patternfly/pfe-core@2.14.0:`, error.message);
+      // Return empty module instead of HTML error page
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send('// Proxy error, placeholder to prevent errors\nexport default {};');
+    }
+  });
+  
+  // Also proxy @patternfly/pfe-core@5.0.3 requests through server
+  app.get('/npm/@patternfly/pfe-core@5.0.3/*', async (req, res) => {
+    try {
+      const targetUrl = `https://cdn.jsdelivr.net${req.path}`;
+      logger.debug(`Proxying @patternfly/pfe-core@5.0.3 request: ${targetUrl}`);
+      
+      const response = await axios.get(targetUrl, { 
+        responseType: 'arraybuffer', // Use arraybuffer to check content before streaming
+        validateStatus: () => true, // Accept all status codes
+        maxRedirects: 5,
+        timeout: 10000
+      });
+      
+      // Check if response is HTML (404 page or error)
+      const contentType = response.headers['content-type'] || '';
+      let isHTML = contentType.includes('text/html') || response.status === 404 || response.status >= 400;
+      
+      // Check content if we have data
+      if (response.data && !isHTML) {
+        try {
+          const buffer = Buffer.from(response.data);
+          const preview = buffer.toString('utf8', 0, Math.min(200, buffer.length));
+          isHTML = preview.includes('<!DOCTYPE') || 
+                   preview.includes('<html') || 
+                   preview.includes('<body') ||
+                   preview.trim().startsWith('<');
+        } catch (e) {
+          // If we can't check, assume it's not HTML if status is OK
+          isHTML = response.status >= 400;
+        }
+      }
+      
+      if (isHTML || response.status >= 400) {
+        logger.warn(`CDN returned HTML/error (${response.status}) for ${targetUrl}, Content-Type: ${contentType}, returning empty module`);
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        return res.send('// Module not found or error, placeholder to prevent errors\nexport default {};');
+      }
+      
+      // Return the actual JavaScript content
+      res.setHeader('Content-Type', contentType || 'application/javascript; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.send(response.data);
+    } catch (error) {
+      logger.error(`Proxy error for @patternfly/pfe-core@5.0.3:`, error.message);
+      // Return empty module instead of HTML error page
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.send('// Proxy error, placeholder to prevent errors\nexport default {};');
+    }
+  });
+
   // Handle import map module specifiers (routes starting with /@)
   // Redirect to the actual file path based on import map resolution
   app.use((req, res, next) => {
@@ -142,13 +262,42 @@ const startServer = async () => {
     }
     // Handle /npm/ paths - redirect to CDN URLs
     // These requests occur when browsers try to resolve npm package subpaths
-    if (req.path.startsWith('/npm/')) {
+    // EXCEPT for @patternfly/pfe-core which is handled by proxy above
+    if (req.path.startsWith('/npm/') && !req.path.startsWith('/npm/@patternfly/pfe-core')) {
       return res.redirect(301, `https://cdn.jsdelivr.net${req.path}`);
     }
     // Handle bare module specifiers - redirect to CDN URLs from import map
     // This helps browsers that try to load modules before import map is processed
     if (req.path === '/lucide-react' || req.path.startsWith('/lucide-react/')) {
       return res.redirect(301, 'https://cdn.jsdelivr.net/npm/lucide-react@0.394.0/dist/esm/lucide-react.js');
+    }
+    // Handle @rhds/* modules - redirect to CDN
+    if (req.path === '/@rhds/icons' || req.path.startsWith('/@rhds/icons/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js');
+    }
+    // Handle @rhds/tokens/media.js - this file doesn't exist, return 404 gracefully
+    if (req.path === '/@rhds/tokens/media.js' || req.path === '/npm/@rhds/tokens@3.0.2/media.js') {
+      // media.js doesn't exist in @rhds/tokens, return empty module
+      res.setHeader('Content-Type', 'application/javascript');
+      return res.send('// @rhds/tokens/media.js is not available in version 3.0.2\n// This is a placeholder to prevent 404 errors\nexport default {};');
+    }
+    if (req.path.startsWith('/@rhds/')) {
+      // Redirect to CDN with the same path
+      return res.redirect(301, `https://cdn.jsdelivr.net/npm${req.path}`);
+    }
+    // Handle @patternfly/pfe-core - required by RHDS elements
+    // Map version 2.14.0 to 5.0.3 (what RHDS elements actually use)
+    if (req.path.startsWith('/@patternfly/pfe-core@2.14.0/')) {
+      // Replace @2.14.0 with @5.0.3 in the path
+      const newPath = req.path.replace('@2.14.0', '@5.0.3');
+      return res.redirect(301, `https://cdn.jsdelivr.net/npm${newPath}`);
+    }
+    if (req.path.startsWith('/@patternfly/pfe-core/')) {
+      return res.redirect(301, `https://cdn.jsdelivr.net/npm${req.path}`);
+    }
+    // Handle tslib - required by RHDS elements
+    if (req.path === '/tslib' || req.path.startsWith('/tslib/')) {
+      return res.redirect(301, 'https://cdn.jsdelivr.net/npm/tslib@2.8.1/+esm');
     }
     if (req.path === '/clsx' || req.path.startsWith('/clsx/')) {
       return res.redirect(301, 'https://cdn.jsdelivr.net/npm/clsx@2.1.1/+esm');

@@ -1,3 +1,8 @@
+/* Red Hat Design System Tokens */
+/* Import RHDS tokens from npm package */
+/* This includes font definitions and CSS variables */
+@import '@rhds/tokens/css/global.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,17 +10,14 @@
 /* 
  * Red Hat Design System Integration
  * 
- * Red Hat Design System tokens are loaded via CDN in index.html:
- * <link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/default-theme.css">
+ * Red Hat Design System tokens are now imported from npm package:
+ * @import '@rhds/tokens/css/global.css';
  * 
  * You can use RHDS tokens in your CSS like this:
  * color: var(--rh-color-text-primary);
  * background-color: var(--rh-color-surface-base);
  * 
- * Note: The correct file is default-theme.css (not theme.css)
- * Red Hat CDN URL: https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/default-theme.css
- * 
- * @see https://ux.redhat.com/get-started/developers/installation/#red-hat-cdn
+ * @see https://ux.redhat.com/get-started/developers/tokens/
  */
 
 /* Custom Variables */
@@ -71,18 +73,28 @@
   --gizmo-gray-500: #999;
   --gizmo-gray-600: #666;
   --gizmo-gray-950: #0f0f0f;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --markdown-font-size: 1rem;
+  
+  /* Red Hat Design System Typography Tokens */
+  /* https://ux.redhat.com/tokens/font/ */
+  /* Font sizes use RHDS tokens */
+  --font-size-xs: var(--rh-font-size-body-text-xs, 0.75rem);
+  --font-size-sm: var(--rh-font-size-body-text-sm, 0.875rem);
+  --font-size-base: var(--rh-font-size-body-text-md, 1rem);
+  --font-size-lg: var(--rh-font-size-body-text-lg, 1.125rem);
+  --font-size-xl: var(--rh-font-size-body-text-xl, 1.25rem);
+  --markdown-font-size: var(--rh-font-size-body-text-md, 1rem);
 }
 html {
+  /* Red Hat Design System Typography - Apply to root */
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
+  font-size: var(--rh-font-size-body-text-md, 1rem);
+  line-height: var(--rh-line-height-body-text-md, 1.5);
+  color: var(--rh-color-text-primary, #151515);
+  
   --brand-purple: #ab68ff;
   --presentation: var(--white);
-  --text-primary: var(--gray-800);
-  --text-secondary: var(--gray-600);
+  --text-primary: var(--rh-color-text-primary, var(--gray-800));
+  --text-secondary: var(--rh-color-text-secondary, var(--gray-600));
   --text-secondary-alt: var(--gray-500);
   --text-tertiary: var(--gray-500);
   --text-warning: var(--amber-500);
@@ -321,82 +333,63 @@ html {
   text-overflow: ellipsis;
 }
 
-@font-face {
-  font-display: swap;
-  font-family: Inter;
-  font-style: normal;
-  font-weight: 400;
-  src: url('$fonts/Inter-Regular.woff2') format('woff2');
-  size-adjust: 94%;
+/* 
+ * Red Hat Design System Typography
+ * 
+ * Fonts are loaded from Red Hat CDN via @rhds/tokens package
+ * See: https://ux.redhat.com/tokens/font/
+ * 
+ * Font families available via CSS variables:
+ * - --rh-font-family-heading: RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif
+ * - --rh-font-family-body-text: RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif
+ * - --rh-font-family-code: RedHatMono, 'Red Hat Mono', 'Courier New', Courier, monospace
+ * 
+ * Legacy Inter and Roboto Mono font-face declarations removed - using RHDS tokens instead
+ * The fonts are loaded from Red Hat's CDN via the @rhds/tokens package
+ */
+
+/* Apply Red Hat Design System Typography to base elements */
+* {
+  /* Ensure all elements inherit Red Hat fonts unless explicitly overridden */
+  font-family: inherit;
 }
 
-@font-face {
-  font-display: swap;
-  font-family: Inter;
-  font-style: italic;
-  font-weight: 400;
-  src: url('$fonts/Inter-Italic.woff2') format('woff2');
-  size-adjust: 94%;
+body {
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
+  font-size: var(--rh-font-size-body-text-md, 1rem);
+  line-height: var(--rh-line-height-body-text-md, 1.5);
+  color: var(--rh-color-text-primary, #151515);
 }
 
-@font-face {
-  font-display: swap;
-  font-family: Inter;
-  font-style: normal;
-  font-weight: 500;
-  src: url('$fonts/Inter-SemiBold.woff2') format('woff2');
-  size-adjust: 94%;
+/* Apply Red Hat fonts to all text elements - use !important to override any conflicting styles */
+p, span, div, a, button, input, textarea, select, label, li, td, th, 
+article, section, aside, nav, header, footer, main {
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
 }
 
-@font-face {
-  font-display: swap;
-  font-family: Inter;
-  font-style: italic;
-  font-weight: 500;
-  src: url('$fonts/Inter-SemiBoldItalic.woff2') format('woff2');
-  size-adjust: 94%;
+/* Override Tailwind font-sans utility to use Red Hat fonts */
+.font-sans {
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
 }
 
-@font-face {
-  font-display: swap;
-  font-family: Inter;
-  font-style: normal;
-  font-weight: 600;
-  src: url('$fonts/Inter-Bold.woff2') format('woff2');
-  size-adjust: 94%;
+/* Apply Red Hat Display to headings */
+h1, h2, h3, h4, h5, h6,
+.heading,
+[class*="heading"] {
+  font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif);
+  font-weight: var(--rh-font-weight-heading-md, 500);
+  line-height: var(--rh-line-height-heading-md, 1.2);
+  color: var(--rh-color-text-primary, #151515);
 }
 
-@font-face {
-  font-display: swap;
-  font-family: Inter;
-  font-style: italic;
-  font-weight: 600;
-  src: url('$fonts/Inter-BoldItalic.woff2') format('woff2');
-  size-adjust: 94%;
-}
-
-@font-face {
-  font-display: swap;
-  font-family: Roboto Mono;
-  font-style: normal;
-  font-weight: 400;
-  src: url('$fonts/roboto-mono-latin-400-normal.woff2') format('woff2');
-}
-
-@font-face {
-  font-display: swap;
-  font-family: Roboto Mono;
-  font-style: normal;
-  font-weight: 700;
-  src: url('$fonts/roboto-mono-latin-700-normal.woff2') format('woff2');
-}
-
-@font-face {
-  font-display: swap;
-  font-family: Roboto Mono;
-  font-style: italic;
-  font-weight: 400;
-  src: url('$fonts/roboto-mono-latin-400-italic.woff2') format('woff2');
+/* Apply Red Hat Mono to code elements */
+code, pre, kbd, samp,
+.mono,
+[class*="mono"],
+[class*="code"] {
+  font-family: var(--rh-font-family-code, RedHatMono, 'Red Hat Mono', 'Courier New', Courier, monospace);
+  font-size: var(--rh-font-size-code-md, 1rem);
+  line-height: var(--rh-line-height-code-md, 1.5);
 }
 
 /*

@@ -7,7 +7,7 @@ import {
   PermissionBits,
   PermissionTypes,
 } from 'librechat-data-provider';
-import { Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
 import type { TPromptGroup } from 'librechat-data-provider';
 import { useAuthContext, useHasAccess, useResourcePermissions } from '~/hooks';
 import { GenericGrantAccessDialog } from '~/components/Sharing';

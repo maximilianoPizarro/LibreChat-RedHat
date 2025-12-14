@@ -1,50 +1,82 @@
 # Frontend Dockerfile - Red Hat UBI9 with httpd
 # v0.8.1-rc2
-# This version builds the frontend inside the container
-# For a simpler version that uses pre-built dist, see Dockerfile.frontend.simple
-
-# Build stage - Use Red Hat UBI9 Node.js image
-FROM registry.redhat.io/ubi9/nodejs-20:latest AS builder
-
-WORKDIR /app
-USER root
-RUN chown 1001:0 /app
-USER 1001
-
-# Copy dependency files first for better layer caching
-COPY package.json package-lock.json ./
-COPY client/package.json ./client/package.json
-COPY packages/client/package.json ./packages/client/package.json
-COPY packages/data-provider/package.json ./packages/data-provider/package.json
-COPY packages/data-schemas/package.json ./packages/data-schemas/package.json
-COPY packages/api/package.json ./packages/api/package.json
-
-# Install dependencies
-RUN npm config set fetch-retry-maxtimeout 600000 && \
-    npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 15000 && \
-    npm ci --only=production=false
-
-# Copy source code and build
-COPY --chown=1001:1001 . .
-
-# Build frontend (this runs: npm run build:data-provider && npm run build:data-schemas && npm run build:api && npm run build:client-package && cd client && npm run build)
-RUN NODE_OPTIONS="--max-old-space-size=2048" npm run frontend
+# This version copies the pre-built frontend from the backend image
+# IMPORTANT: The backend must be built FIRST to create the image with compiled frontend
+# Build order:
+#   1. docker build -f Dockerfile -t librechat-backend .  (builds everything)
+#   2. docker build -f Dockerfile.frontend -t librechat-frontend .
+# Or with docker-compose:
+#   1. docker-compose -f docker-compose.frontend.yml build backend
+#   2. docker-compose -f docker-compose.frontend.yml build frontend
 
 # Production stage - Use Red Hat UBI9 httpd image
 FROM registry.redhat.io/ubi9/httpd-24:latest
 
-# Copy built application (frontend dist) from builder stage
-COPY --from=builder /app/client/dist /var/www/html
+# Copy built frontend dist from the backend image's 'node' stage
+# The backend Dockerfile builds everything including the frontend
+# This requires the backend image to exist (built with tag: librechat-backend)
+ARG BACKEND_IMAGE=librechat-backend
+COPY --from=${BACKEND_IMAGE} /app/client/dist /var/www/html
 
 # Create httpd configuration for SPA
 RUN echo -e "\
+# MIME types for JavaScript modules\n\
+AddType application/javascript js\n\
+AddType application/javascript mjs\n\
+AddType application/javascript jsx\n\
+AddType text/javascript js\n\
+AddType text/javascript mjs\n\
+# MIME types for images\n\
+AddType image/png png\n\
+AddType image/jpeg jpg jpeg\n\
+AddType image/gif gif\n\
+AddType image/svg+xml svg\n\
+AddType image/webp webp\n\
+AddType image/x-icon ico\n\
+# MIME types for fonts\n\
+AddType font/woff woff\n\
+AddType font/woff2 woff2\n\
+AddType application/font-woff woff\n\
+AddType application/font-woff2 woff2\n\
+\n\
+# Enable mod_rewrite for SPA routing\n\
+RUN sed -i 's/#LoadModule rewrite_module modules\/mod_rewrite.so/LoadModule rewrite_module modules\/mod_rewrite.so/' /etc/httpd/conf.modules.d/00-base.conf || \\\n\
+    echo \"LoadModule rewrite_module modules/mod_rewrite.so\" >> /etc/httpd/conf.modules.d/00-base.conf\n\
+\n\
 <Directory /var/www/html>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride None\n\
     Require all granted\n\
-    # SPA fallback - serve index.html for all routes\n\
-    FallbackResource /index.html\n\
+    # SPA fallback - serve index.html for all routes EXCEPT:\n\
+    # - Files that exist (handled by default)\n\
+    # - API routes\n\
+    # - Static assets with extensions\n\
+    # - Module specifiers (paths starting with /@ or /npm/)\n\
+    # - Assets directory (for @librechat/client and other assets)\n\
+    RewriteEngine On\n\
+    # Don't rewrite if file exists\n\
+    RewriteCond %{REQUEST_FILENAME} -f [OR]\n\
+    RewriteCond %{REQUEST_FILENAME} -d\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite API routes\n\
+    RewriteCond %{REQUEST_URI} ^/api/\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite static assets (files with extensions)\n\
+    RewriteCond %{REQUEST_URI} \\.(js|mjs|jsx|css|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|mp3|mp4|webm|gz)$ [NC]\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite module specifiers\n\
+    RewriteCond %{REQUEST_URI} ^/@ [OR]\n\
+    RewriteCond %{REQUEST_URI} ^/npm/\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite assets directory (for @librechat/client)\n\
+    RewriteCond %{REQUEST_URI} ^/assets/\n\
+    RewriteRule ^ - [L]\n\
+    # Don't rewrite bare module specifiers (these should be resolved by import map)\n\
+    # Return 404 for bare module specifiers so browser can use import map\n\
+    RewriteCond %{REQUEST_URI} ^/[a-zA-Z0-9@_-]+$\n\
+    RewriteRule ^ - [R=404,L]\n\
+    # Rewrite everything else to index.html\n\
+    RewriteRule ^ /index.html [L]\n\
 </Directory>\n\
 \n\
 # Enable CORS if needed (adjust as necessary)\n\

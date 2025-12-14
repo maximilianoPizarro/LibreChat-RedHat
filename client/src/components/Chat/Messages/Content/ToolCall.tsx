@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
 import { TriangleAlert } from 'lucide-react';
 import { actionDelimiter, actionDomainSeparator, Constants } from 'librechat-data-provider';
 import type { TAttachment } from 'librechat-data-provider';

@@ -1,6 +1,7 @@
 import { QueryKeys } from 'librechat-data-provider';
 import { useQueryClient } from '@tanstack/react-query';
-import { TooltipAnchor, Button, NewChatIcon } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { TooltipAnchor, NewChatIcon } from '@librechat/client';
 import { useChatContext } from '~/Providers';
 import { clearMessagesCache } from '~/utils';
 import { useLocalize } from '~/hooks';

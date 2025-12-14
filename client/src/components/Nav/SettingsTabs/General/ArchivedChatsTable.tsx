@@ -2,8 +2,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import debounce from 'lodash/debounce';
 import { useRecoilValue } from 'recoil';
 import { TrashIcon, ArchiveRestore, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { Button } from '~/components/RHDS';
 import {
-  Button,
   OGDialog,
   OGDialogContent,
   OGDialogHeader,

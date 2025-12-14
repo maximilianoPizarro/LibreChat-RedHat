@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, useMediaQuery } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { useMediaQuery } from '@librechat/client';
 import { Users, X, ExternalLink } from 'lucide-react';
 import { ResourceType } from 'librechat-data-provider';
 import type { TPrincipal, AccessRoleIds } from 'librechat-data-provider';

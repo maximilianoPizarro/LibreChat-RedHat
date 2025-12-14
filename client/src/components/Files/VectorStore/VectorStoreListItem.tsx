@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, DotsIcon, TrashIcon } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { DotsIcon, TrashIcon } from '@librechat/client';
 import { TVectorStore } from '~/common';
 
 type VectorStoreListItemProps = {

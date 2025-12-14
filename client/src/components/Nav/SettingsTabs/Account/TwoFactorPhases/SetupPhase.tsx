@@ -1,7 +1,8 @@
 import React from 'react';
 import { QrCode } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button, Spinner } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Spinner } from '@librechat/client';
 import { useLocalize } from '~/hooks';
 
 const fadeAnimation = {

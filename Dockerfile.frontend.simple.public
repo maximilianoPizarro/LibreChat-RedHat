@@ -26,6 +26,18 @@ AddType application/javascript mjs\n\
 AddType application/javascript jsx\n\
 AddType text/javascript js\n\
 AddType text/javascript mjs\n\
+# MIME types for images\n\
+AddType image/png png\n\
+AddType image/jpeg jpg jpeg\n\
+AddType image/gif gif\n\
+AddType image/svg+xml svg\n\
+AddType image/webp webp\n\
+AddType image/x-icon ico\n\
+# MIME types for fonts\n\
+AddType font/woff woff\n\
+AddType font/woff2 woff2\n\
+AddType application/font-woff woff\n\
+AddType application/font-woff2 woff2\n\
 \n\
 <Directory /var/www/html>\n\
     Options Indexes FollowSymLinks\n\

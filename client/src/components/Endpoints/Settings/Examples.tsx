@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Minus } from 'lucide-react';
-import { Button, Label } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Label } from '@librechat/client';
 import TextareaAutosize from 'react-textarea-autosize';
 import type { TExample } from 'librechat-data-provider';
 import type { TSetExample } from '~/common';

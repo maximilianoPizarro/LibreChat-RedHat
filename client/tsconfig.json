@@ -14,9 +14,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noImplicitAny": false,
-    "noEmit": false,
-    "declaration": true,
-    "declarationDir": "./types",
+    "noEmit": true,
     "jsx": "preserve",
     "baseUrl": "..",
     "paths": {
@@ -27,9 +25,18 @@
     }
   },
   "types": ["node", "jest", "@testing-library/jest-dom"],
-  "exclude": ["node_modules", "vite.config.ts"],
+  "exclude": [
+    "node_modules",
+    "vite.config.ts",
+    "dist",
+    "**/*.js",
+    "**/*.jsx",
+    "src/**/*.js",
+    "src/**/*.jsx"
+  ],
   "include": [
-    "src/**/*",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "test/**/*",
     "../e2e/**/*",
     "test/setupTests.js",

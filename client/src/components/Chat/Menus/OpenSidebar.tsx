@@ -1,4 +1,5 @@
-import { TooltipAnchor, Button, Sidebar } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { TooltipAnchor, Sidebar } from '@librechat/client';
 import { useLocalize } from '~/hooks';
 import { cn } from '~/utils';
 

@@ -11,8 +11,32 @@ module.exports = {
   darkMode: ['class'],
   theme: {
     fontFamily: {
-      sans: ['Inter', 'sans-serif'],
-      mono: ['Roboto Mono', 'monospace'],
+      // Red Hat Design System Typography
+      // https://ux.redhat.com/tokens/font/
+      sans: [
+        'var(--rh-font-family-body-text)',
+        'RedHatText',
+        "'Red Hat Text'",
+        'Helvetica',
+        'Arial',
+        'sans-serif'
+      ],
+      heading: [
+        'var(--rh-font-family-heading)',
+        'RedHatDisplay',
+        "'Red Hat Display'",
+        'Helvetica',
+        'Arial',
+        'sans-serif'
+      ],
+      mono: [
+        'var(--rh-font-family-code)',
+        'RedHatMono',
+        "'Red Hat Mono'",
+        "'Courier New'",
+        'Courier',
+        'monospace'
+      ],
     },
     // fontFamily: {
     //   sans: ['Söhne', 'sans-serif'],

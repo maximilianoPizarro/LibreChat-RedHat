@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Button, Spinner } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Spinner } from '@librechat/client';
 import { useLocalize, useMCPServerManager, useMCPConnectionStatus } from '~/hooks';
 import { useGetStartupConfig } from '~/data-provider';
 

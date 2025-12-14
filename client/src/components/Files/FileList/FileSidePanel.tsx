@@ -1,6 +1,7 @@
 import React from 'react';
 import FileList from './FileList';
-import { Button, Input } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Input } from '@librechat/client';
 import { TFile } from 'librechat-data-provider/dist/types';
 import UploadFileButton from './UploadFileButton';
 import { ListFilter } from 'lucide-react';

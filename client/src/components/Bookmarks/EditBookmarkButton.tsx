@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { TooltipAnchor, OGDialogTrigger, EditIcon, Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { TooltipAnchor, OGDialogTrigger, EditIcon } from '@librechat/client';
 import type { TConversationTag } from 'librechat-data-provider';
 import type { FC } from 'react';
 import BookmarkEditDialog from './BookmarkEditDialog';

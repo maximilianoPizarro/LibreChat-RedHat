@@ -5,6 +5,7 @@
 services:
   frontend:
     container_name: RedHatChat-Frontend
+    image: quay.io/maximilianopizarro/librechat-redhat-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend.simple.public  # Usa imagen oficial de Red Hat
@@ -32,6 +33,7 @@ services:
 
   api:
     container_name: RedHatChat-Backend
+    image: quay.io/maximilianopizarro/librechat-redhat-api:latest
     build:
       context: .
       dockerfile: Dockerfile

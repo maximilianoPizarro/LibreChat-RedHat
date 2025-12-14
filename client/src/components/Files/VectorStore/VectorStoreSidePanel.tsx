@@ -1,6 +1,7 @@
 import React from 'react';
 import { ListFilter } from 'lucide-react';
-import { Button, Input } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Input } from '@librechat/client';
 import VectorStoreButton from './VectorStoreButton';
 import VectorStoreList from './VectorStoreList';
 import { TVectorStore } from '~/common';

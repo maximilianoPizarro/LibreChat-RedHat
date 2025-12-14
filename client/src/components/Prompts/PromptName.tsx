@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Button, Label, Input, EditIcon, SaveIcon } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Label, Input, EditIcon, SaveIcon } from '@librechat/client';
 
 type Props = {
   name?: string;

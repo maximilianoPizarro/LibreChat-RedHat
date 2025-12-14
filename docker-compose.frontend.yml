@@ -8,8 +8,13 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: Dockerfile.frontend.simple  # Usa la versión simple que copia client/dist
-      # Para construir en el contenedor, cambia a: dockerfile: Dockerfile.frontend
+      dockerfile: Dockerfile.frontend  # Copia el dist compilado del backend
+      args:
+        BACKEND_IMAGE: ${BACKEND_IMAGE:-librechat-backend}
+      # IMPORTANTE: El backend DEBE construirse primero
+      # Orden de construcción:
+      #   docker-compose -f docker-compose.frontend.yml build backend
+      #   docker-compose -f docker-compose.frontend.yml build frontend
     container_name: librechat-frontend
     ports:
       - "8080:8080"
@@ -35,6 +40,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: librechat-backend:latest  # Nombre de imagen explícito para que el frontend pueda copiar desde ella
     container_name: librechat-backend
     ports:
       - "3080:3080"
@@ -44,6 +50,7 @@ services:
       - PORT=3080
       - MONGO_URI=mongodb://mongodb:27017/LibreChat
       - MEILI_HOST=http://meilisearch:7700
+      - ALLOW_REGISTRATIO=true
       # Add your other environment variables here
       # - RAG_API_URL=http://rag_api:8000
       # - etc.
@@ -54,8 +61,12 @@ services:
       - mongodb
       - meilisearch
     volumes:
+      # uploads: El backend escribe y sirve estos archivos a través de /uploads/
       - ./uploads:/app/uploads
+      # logs: Logs del backend
       - ./logs:/app/api/logs
+      # images: El backend escribe y sirve estas imágenes a través de /images/
+      # El frontend no necesita este volumen porque solo sirve archivos estáticos desde client/dist
       - ./images:/app/client/public/images
     # Health check
     healthcheck:

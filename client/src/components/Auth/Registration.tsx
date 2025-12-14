@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
 import React, { useContext, useState } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { ThemeContext, Spinner, Button, isDark } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { ThemeContext, Spinner, isDark } from '@librechat/client';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { useRegisterUserMutation } from 'librechat-data-provider/react-query';
 import { loginPage } from 'librechat-data-provider';
@@ -44,17 +45,23 @@ const Registration: React.FC = () => {
     onSuccess: () => {
       setIsSubmitting(false);
       setCountdown(3);
-      const timer = setInterval(() => {
-        setCountdown((prevCountdown) => {
-          if (prevCountdown <= 1) {
-            clearInterval(timer);
-            navigate('/c/new', { replace: true });
-            return 0;
-          } else {
-            return prevCountdown - 1;
-          }
-        });
-      }, 1000);
+      // Use setTimeout to avoid setState during render warning
+      setTimeout(() => {
+        const timer = setInterval(() => {
+          setCountdown((prevCountdown) => {
+            if (prevCountdown <= 1) {
+              clearInterval(timer);
+              // Navigate in next tick to avoid setState during render
+              setTimeout(() => {
+                navigate('/c/new', { replace: true });
+              }, 0);
+              return 0;
+            } else {
+              return prevCountdown - 1;
+            }
+          });
+        }, 1000);
+      }, 0);
     },
     onError: (error: unknown) => {
       setIsSubmitting(false);

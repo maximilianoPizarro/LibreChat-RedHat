@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextareaAutosize, Input } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { TextareaAutosize, Input } from '@librechat/client';
 import { useForm, Controller, FormProvider } from 'react-hook-form';
 import { LocalStorageKeys, PermissionTypes, Permissions } from 'librechat-data-provider';
 import CategorySelector from '~/components/Prompts/Groups/CategorySelector';

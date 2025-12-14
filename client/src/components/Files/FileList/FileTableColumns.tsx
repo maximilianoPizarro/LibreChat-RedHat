@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { PlusIcon } from 'lucide-react';
-import { Button, Checkbox, DotsIcon, FileIcon } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Checkbox, DotsIcon, FileIcon } from '@librechat/client';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TFile } from 'librechat-data-provider';
 import { formatDate, getFileType } from '~/utils';

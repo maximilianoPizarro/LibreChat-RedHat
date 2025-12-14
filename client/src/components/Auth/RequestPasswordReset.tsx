@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useState, ReactNode } from 'react';
-import { Spinner, Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Spinner } from '@librechat/client';
 import { useOutletContext } from 'react-router-dom';
 import { useRequestPasswordResetMutation } from 'librechat-data-provider/react-query';
 import { loginPage } from 'librechat-data-provider';

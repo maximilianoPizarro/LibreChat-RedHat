@@ -13,10 +13,40 @@ const backendURL = process.env.HOST ? `http://${process.env.HOST}:${backendPort}
 
 export default defineConfig(({ command }) => ({
   base: '',
+  optimizeDeps: {
+    exclude: [
+      // Exclude @rhds/icons from dependency optimization - it uses top-level await
+      // and is loaded from CDN via import map
+      '@rhds/icons',
+      // Also exclude @rhds/elements since it may import @rhds/icons transitively
+      '@rhds/elements',
+    ],
+    esbuildOptions: {
+      target: 'es2022', // Support top-level await
+      // Explicitly exclude @rhds/icons from esbuild processing
+      external: ['@rhds/icons'],
+      // Ignore @rhds/icons during dependency scanning
+      plugins: [
+        {
+          name: 'ignore-rhds-icons',
+          setup(build) {
+            // Mark @rhds/icons as external to prevent processing
+            build.onResolve({ filter: /@rhds\/icons/ }, (args) => {
+              return { path: args.path, external: true };
+            });
+            // Also handle node_modules paths
+            build.onResolve({ filter: /.*\/node_modules\/@rhds\/icons\/.*/ }, (args) => {
+              return { path: args.path, external: true };
+            });
+          },
+        },
+      ],
+    },
+  },
   server: {
     allowedHosts: process.env.VITE_ALLOWED_HOSTS && process.env.VITE_ALLOWED_HOSTS.split(',') || [],
-    host: process.env.HOST || 'localhost',
-    port: process.env.PORT && Number(process.env.PORT) || 3090,
+    host: process.env.HOST || '0.0.0.0',
+    port: process.env.PORT && Number(process.env.PORT) || 8080,
     strictPort: false,
     proxy: {
       '/api': {
@@ -35,6 +65,29 @@ export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     nodePolyfills(),
+    // Plugin to exclude @rhds/icons from esbuild processing
+    {
+      name: 'exclude-rhds-icons',
+      enforce: 'pre',
+      resolveId(id, importer) {
+        // Exclude @rhds/icons from being processed
+        if (id === '@rhds/icons' || id.startsWith('@rhds/icons/')) {
+          return { id, external: true };
+        }
+        // Also handle node_modules path resolution
+        if (id.includes('@rhds/icons') && importer?.includes('node_modules')) {
+          return { id, external: true };
+        }
+        return null;
+      },
+      load(id) {
+        // Prevent loading @rhds/icons files
+        if (id.includes('@rhds/icons') && id.includes('node_modules')) {
+          return { code: 'export {};', map: null };
+        }
+        return null;
+      },
+    },
     VitePWA({
       injectRegister: 'auto', // 'auto' | 'manual' | 'disabled'
       registerType: 'autoUpdate', // 'prompt' | 'autoUpdate'
@@ -72,8 +125,21 @@ export default defineConfig(({ command }) => ({
               },
             },
           },
+          {
+            // Serve images directly from network, bypass service worker cache
+            urlPattern: /\.(png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'static-images',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              networkTimeoutSeconds: 3,
+            },
+          },
         ],
-        navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
+        navigateFallbackDenylist: [/^\/oauth/, /^\/api/, /\.(png|jpg|jpeg|gif|svg|webp|ico|woff|woff2|ttf|eot)$/i],
       },
       includeAssets: [],
       manifest: {
@@ -122,6 +188,12 @@ export default defineConfig(({ command }) => ({
     sourcemap: process.env.NODE_ENV === 'development',
     outDir: './dist',
     minify: 'terser',
+    commonjsOptions: {
+      exclude: ['@rhds/icons'],
+    },
+    esbuild: {
+      target: 'es2022', // Support top-level await
+    },
       rollupOptions: {
         preserveEntrySignatures: 'strict',
         external: [
@@ -136,6 +208,8 @@ export default defineConfig(({ command }) => ({
           'react-dom',
           'react/jsx-runtime',
           'react/jsx-dev-runtime',
+          // @rhds/icons is externalized - it uses top-level await and is loaded from CDN via import map
+          /^@rhds\/icons/,
         ],
       output: {
         manualChunks(id: string) {

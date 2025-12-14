@@ -5,7 +5,8 @@ import { useRecoilValue } from 'recoil';
 import { Menu, Rocket } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
-import { Button, Skeleton, useToastContext } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Skeleton, useToastContext } from '@librechat/client';
 import {
   Permissions,
   ResourceType,

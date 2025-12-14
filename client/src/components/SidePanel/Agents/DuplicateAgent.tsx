@@ -1,5 +1,6 @@
 import { CopyPlus } from 'lucide-react';
-import { useToastContext, Button } from '@librechat/client';
+import { useToastContext } from '@librechat/client';
+import { Button } from '~/components/RHDS';
 import { useDuplicateAgentMutation } from '~/data-provider';
 import { isEphemeralAgent } from '~/common';
 import { useLocalize } from '~/hooks';

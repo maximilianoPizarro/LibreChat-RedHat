@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import { ArrowUpDown } from 'lucide-react';
-import { Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TFile } from 'librechat-data-provider';
 import PanelFileCell from './PanelFileCell';

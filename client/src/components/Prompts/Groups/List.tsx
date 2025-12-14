@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Skeleton } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { Skeleton } from '@librechat/client';
 import { PermissionTypes, Permissions } from 'librechat-data-provider';
 import type { TPromptGroup, TStartupConfig } from 'librechat-data-provider';
 import DashGroupItem from '~/components/Prompts/Groups/DashGroupItem';

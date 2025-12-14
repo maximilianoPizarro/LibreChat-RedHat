@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, OGDialog, OGDialogTemplate } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { OGDialog, OGDialogTemplate } from '@librechat/client';
 import {
   AuthType,
   RerankerTypes,

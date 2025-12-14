@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DeleteIconButton from '../DeleteIconButton';
-import { TrashIcon, Button } from '@librechat/client';
+import { Button } from '~/components/RHDS';
+import { TrashIcon } from '@librechat/client';
 import { TFile } from 'librechat-data-provider/dist/types';
 import UploadFileButton from '../FileList/UploadFileButton';
 import UploadFileModal from '../FileList/UploadFileModal';
