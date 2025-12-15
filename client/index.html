@@ -25,19 +25,17 @@
     <!-- Red Hat Design System Fonts -->
     <!-- Load Red Hat fonts from CDN -->
     <link rel="preconnect" href="https://www.redhatstatic.com">
-    <link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/fonts.css">
+    <link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/global.css">
     
-    <!-- Red Hat Design System Import Map -->
-    <!-- Based on official documentation: https://ux.redhat.com/get-started/developers/installation/#base-import-map -->
+    <!-- Import Map for External Modules -->
+    <!-- Only needed for modules marked as "external" in vite.config.ts -->
+    <!-- @rhds/elements is bundled by Vite from node_modules, so it doesn't need importmap -->
+    <!-- @rhds/tokens is imported as CSS, not as a JS module -->
     <script type="importmap">
       {
         "imports": {
-          "@rhds/elements/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.1/elements/",
-          "@rhds/elements/react/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.1/react/",
           "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
           "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
-          "@patternfly/pfe-core/": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.3/",
-          "@patternfly/pfe-core@2.14.0/": "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@5.0.3/",
           "@librechat/client": "/assets/@librechat/client/index.es.js",
           "react": "https://cdn.jsdelivr.net/npm/react@18.2.0/+esm",
           "react/": "https://cdn.jsdelivr.net/npm/react@18.2.0/",
@@ -50,28 +48,9 @@
           "tslib": "https://cdn.jsdelivr.net/npm/tslib@2.8.1/+esm"
         },
         "scopes": {
-          "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.1/elements/": {
-            "@patternfly/pfe-core/": "/npm/@patternfly/pfe-core@5.0.3/",
-            "@patternfly/pfe-core@2.14.0/": "/npm/@patternfly/pfe-core@5.0.3/"
-          },
-          "https://cdn.jsdelivr.net/npm/@patternfly/pfe-core@2.14.0/": {
-            "./": "/npm/@patternfly/pfe-core@5.0.3/"
-          },
           "https://cdn.jsdelivr.net/npm/": {
-            "@rhds/elements/lib/": "https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.1/lib/",
             "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
-            "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
-            "@rhds/tokens/": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/",
-            "@rhds/tokens@3.0.2/media.js": "/npm/@rhds/tokens@3.0.2/media.js",
-            "@patternfly/pfe-core/": "/npm/@patternfly/pfe-core@5.0.3/",
-            "@patternfly/pfe-core@2.14.0/": "/npm/@patternfly/pfe-core@5.0.3/",
-            "@lit/context": "https://cdn.jsdelivr.net/npm/@lit/context@1.1.5/development/index.js",
-            "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.0/reactive-element.js",
-            "@lit/reactive-element/decorators/": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.1.0/decorators/",
-            "lit": "https://cdn.jsdelivr.net/npm/lit@3.3.0/index.js",
-            "lit/": "https://cdn.jsdelivr.net/npm/lit@3.3.0/",
-            "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.3.0/lit-html.js",
-            "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3.3.0/"
+            "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/"
           }
         }
       }

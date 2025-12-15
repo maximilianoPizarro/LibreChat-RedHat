@@ -21,9 +21,15 @@
  */
 
 /* Custom Variables */
+/* Note: These are legacy color variables maintained for backward compatibility */
+/* New code should use Red Hat Design System tokens directly: --rh-color-* */
+/* See: https://ux.redhat.com/get-started/developers/tokens/ */
 :root {
   --white: #fff;
   --black: #000;
+  
+  /* Gray scale - aligned with Red Hat Design System neutral colors */
+  /* Prefer using --rh-color-surface-* and --rh-color-text-* tokens */
   --gray-20: #ececf1;
   --gray-50: #f7f7f8;
   --gray-100: #ececec;
@@ -36,6 +42,9 @@
   --gray-800: #212121;
   --gray-850: #171717;
   --gray-900: #0d0d0d;
+  
+  /* Green scale - aligned with Red Hat success colors */
+  /* Prefer using --rh-color-status-success-* tokens */
   --green-50: #ecfdf5;
   --green-100: #d1fae5;
   --green-200: #a7f3d0;
@@ -43,10 +52,13 @@
   --green-400: #34d399;
   --green-500: #10b981;
   --green-600: #059669;
-  --green-700: #047857;
+  --green-700: #047857; /* Matches RHDS success color */
   --green-800: #065f46;
   --green-900: #064e3b;
   --green-950: #022c22;
+  
+  /* Red scale - aligned with Red Hat danger/brand colors */
+  /* Prefer using --rh-color-status-danger-* and --rh-color-brand-red-* tokens */
   --red-50: #fef2f2;
   --red-100: #fee2e2;
   --red-200: #fecaca;
@@ -54,10 +66,13 @@
   --red-400: #f87171;
   --red-500: #ef4444;
   --red-600: #dc2626;
-  --red-700: #b91c1c;
+  --red-700: #b91c1c; /* Matches RHDS danger color */
   --red-800: #991b1b;
   --red-900: #7f1d1d;
   --red-950: #450a0a;
+  
+  /* Amber/Yellow scale - aligned with Red Hat warning colors */
+  /* Prefer using --rh-color-status-warning-* tokens */
   --amber-50: #fffbeb;
   --amber-100: #fef3c7;
   --amber-200: #fde68a;
@@ -69,6 +84,8 @@
   --amber-800: #92400e;
   --amber-900: #78350f;
   --amber-950: #451a03;
+  
+  /* Brand colors */
   --brand-purple: #ab68ff;
   --gizmo-gray-500: #999;
   --gizmo-gray-600: #666;
@@ -76,54 +93,71 @@
   
   /* Red Hat Design System Typography Tokens */
   /* https://ux.redhat.com/tokens/font/ */
-  /* Font sizes use RHDS tokens */
-  --font-size-xs: var(--rh-font-size-body-text-xs, 0.75rem);
-  --font-size-sm: var(--rh-font-size-body-text-sm, 0.875rem);
-  --font-size-base: var(--rh-font-size-body-text-md, 1rem);
-  --font-size-lg: var(--rh-font-size-body-text-lg, 1.125rem);
-  --font-size-xl: var(--rh-font-size-body-text-xl, 1.25rem);
-  --markdown-font-size: var(--rh-font-size-body-text-md, 1rem);
+  /* Font sizes use RHDS tokens - following UX guidelines */
+  /* Use Red Hat Text for < 18px, Red Hat Display for >= 18px */
+  --font-size-xs: var(--rh-font-size-body-text-xs, 0.75rem); /* 12px - use Text */
+  --font-size-sm: var(--rh-font-size-body-text-sm, 0.875rem); /* 14px - use Text */
+  --font-size-base: var(--rh-font-size-body-text-md, 1rem); /* 16px - use Text */
+  --font-size-lg: var(--rh-font-size-body-text-lg, 1.125rem); /* 18px - use Display */
+  --font-size-xl: var(--rh-font-size-body-text-xl, 1.25rem); /* 20px - use Display */
+  --markdown-font-size: var(--rh-font-size-body-text-md, 1rem); /* 16px - use Text */
 }
 html {
   /* Red Hat Design System Typography - Apply to root */
+  /* Use Red Hat Text for body text (< 18px) as per UX guidelines */
   font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
   font-size: var(--rh-font-size-body-text-md, 1rem);
   line-height: var(--rh-line-height-body-text-md, 1.5);
   color: var(--rh-color-text-primary, #151515);
   
+  /* Red Hat Design System Color Tokens */
+  /* Using official RHDS tokens with fallbacks for compatibility */
+  /* See: https://ux.redhat.com/get-started/developers/tokens/ */
   --brand-purple: #ab68ff;
-  --presentation: var(--white);
-  --text-primary: var(--rh-color-text-primary, var(--gray-800));
-  --text-secondary: var(--rh-color-text-secondary, var(--gray-600));
-  --text-secondary-alt: var(--gray-500);
-  --text-tertiary: var(--gray-500);
-  --text-warning: var(--amber-500);
-  --ring-primary: var(--gray-500);
-  --header-primary: var(--white);
-  --header-hover: var(--gray-50);
-  --header-button-hover: var(--gray-50);
-  --surface-active: var(--gray-100);
-  --surface-active-alt: var(--gray-200);
-  --surface-hover: var(--gray-200);
-  --surface-hover-alt: var(--gray-300);
-  --surface-primary: var(--white);
-  --surface-primary-alt: var(--gray-50);
-  --surface-primary-contrast: var(--gray-100);
-  --surface-secondary: var(--gray-50);
-  --surface-secondary-alt: var(--gray-200);
-  --surface-tertiary: var(--gray-100);
-  --surface-tertiary-alt: var(--white);
-  --surface-dialog: var(--white);
-  --surface-submit: var(--green-700);
-  --surface-submit-hover: var(--green-800);
-  --surface-destructive: var(--red-700);
-  --surface-destructive-hover: var(--red-800);
-  --surface-chat: var(--white);
-  --border-light: var(--gray-200);
-  --border-medium-alt: var(--gray-300);
-  --border-medium: var(--gray-300);
-  --border-heavy: var(--gray-400);
-  --border-xheavy: var(--gray-500);
+  --presentation: var(--rh-color-surface-base, var(--white));
+  
+  /* Text colors - using RHDS tokens */
+  --text-primary: var(--rh-color-text-primary, #151515);
+  --text-secondary: var(--rh-color-text-secondary, #6a6e73);
+  --text-secondary-alt: var(--rh-color-text-secondary-on-light, #6a6e73);
+  --text-tertiary: var(--rh-color-text-disabled-on-light, #8a8d90);
+  --text-warning: var(--rh-color-status-warning-on-light, #f0ab00);
+  
+  /* Ring/Focus colors */
+  --ring-primary: var(--rh-color-interactive-default, #0066cc);
+  
+  /* Header colors - using RHDS surface tokens */
+  --header-primary: var(--rh-color-surface-base, var(--white));
+  --header-hover: var(--rh-color-surface-light, #f5f5f5);
+  --header-button-hover: var(--rh-color-surface-light, #f5f5f5);
+  
+  /* Surface colors - using RHDS surface tokens */
+  --surface-active: var(--rh-color-surface-light, #f5f5f5);
+  --surface-active-alt: var(--rh-color-surface-lighter, #fafafa);
+  --surface-hover: var(--rh-color-surface-light, #f5f5f5);
+  --surface-hover-alt: var(--rh-color-surface-lighter, #fafafa);
+  --surface-primary: var(--rh-color-surface-base, var(--white));
+  --surface-primary-alt: var(--rh-color-surface-light, #f5f5f5);
+  --surface-primary-contrast: var(--rh-color-surface-lighter, #fafafa);
+  --surface-secondary: var(--rh-color-surface-light, #f5f5f5);
+  --surface-secondary-alt: var(--rh-color-surface-lighter, #fafafa);
+  --surface-tertiary: var(--rh-color-surface-lighter, #fafafa);
+  --surface-tertiary-alt: var(--rh-color-surface-base, var(--white));
+  --surface-dialog: var(--rh-color-surface-base, var(--white));
+  
+  /* Action colors - using RHDS status tokens */
+  --surface-submit: var(--rh-color-status-success-on-light, #3e8635);
+  --surface-submit-hover: var(--rh-color-status-success-on-light-hover, #2d6a24);
+  --surface-destructive: var(--rh-color-status-danger-on-light, #c9190b);
+  --surface-destructive-hover: var(--rh-color-status-danger-on-light-hover, #a30000);
+  --surface-chat: var(--rh-color-surface-base, var(--white));
+  
+  /* Border colors - using RHDS border tokens */
+  --border-light: var(--rh-color-border-subtle-on-light, #d2d2d2);
+  --border-medium-alt: var(--rh-color-border-default-on-light, #b8bbbe);
+  --border-medium: var(--rh-color-border-default-on-light, #b8bbbe);
+  --border-heavy: var(--rh-color-border-strong-on-light, #8a8d90);
+  --border-xheavy: var(--rh-color-border-strong-on-light, #6a6e73);
   /* These are test styles */
 
   --background: 0 0% 100%;
@@ -152,38 +186,52 @@ html {
   --switch-unchecked: 0 0% 58%;
 }
 .dark {
+  /* Red Hat Design System Color Tokens for Dark Mode */
   --brand-purple: #ab68ff;
-  --presentation: var(--gray-800);
-  --text-primary: var(--gray-100);
-  --text-secondary: var(--gray-300);
-  --text-secondary-alt: var(--gray-400);
-  --text-tertiary: var(--gray-500);
-  --text-warning: var(--amber-500);
-  --header-primary: var(--gray-700);
-  --header-hover: var(--gray-600);
-  --header-button-hover: var(--gray-700);
-  --surface-active: var(--gray-500);
-  --surface-active-alt: var(--gray-700);
-  --surface-hover: var(--gray-600);
-  --surface-hover-alt: var(--gray-600);
-  --surface-primary: var(--gray-900);
-  --surface-primary-alt: var(--gray-850);
-  --surface-primary-contrast: var(--gray-850);
-  --surface-secondary: var(--gray-800);
-  --surface-secondary-alt: var(--gray-800);
-  --surface-tertiary: var(--gray-700);
-  --surface-tertiary-alt: var(--gray-700);
-  --surface-dialog: var(--gray-850);
-  --surface-submit: var(--green-700);
-  --surface-submit-hover: var(--green-800);
-  --surface-destructive: var(--red-800);
-  --surface-destructive-hover: var(--red-900);
-  --surface-chat: var(--gray-700);
-  --border-light: var(--gray-700);
-  --border-medium-alt: var(--gray-600);
-  --border-medium: var(--gray-600);
-  --border-heavy: var(--gray-500);
-  --border-xheavy: var(--gray-400);
+  --presentation: var(--rh-color-surface-base-dark, #1f1f1f);
+  
+  /* Text colors - using RHDS dark mode tokens */
+  --text-primary: var(--rh-color-text-primary-on-dark, #ffffff);
+  --text-secondary: var(--rh-color-text-secondary-on-dark, #d2d2d2);
+  --text-secondary-alt: var(--rh-color-text-secondary-on-dark, #d2d2d2);
+  --text-tertiary: var(--rh-color-text-disabled-on-dark, #8a8d90);
+  --text-warning: var(--rh-color-status-warning-on-dark, #f0ab00);
+  
+  /* Ring/Focus colors */
+  --ring-primary: var(--rh-color-interactive-default-on-dark, #4c9aff);
+  
+  /* Header colors - using RHDS dark surface tokens */
+  --header-primary: var(--rh-color-surface-base-dark, #1f1f1f);
+  --header-hover: var(--rh-color-surface-light-dark, #2d2d2d);
+  --header-button-hover: var(--rh-color-surface-light-dark, #2d2d2d);
+  
+  /* Surface colors - using RHDS dark surface tokens */
+  --surface-active: var(--rh-color-surface-light-dark, #2d2d2d);
+  --surface-active-alt: var(--rh-color-surface-lighter-dark, #3d3d3d);
+  --surface-hover: var(--rh-color-surface-light-dark, #2d2d2d);
+  --surface-hover-alt: var(--rh-color-surface-lighter-dark, #3d3d3d);
+  --surface-primary: var(--rh-color-surface-base-dark, #1f1f1f);
+  --surface-primary-alt: var(--rh-color-surface-light-dark, #2d2d2d);
+  --surface-primary-contrast: var(--rh-color-surface-lighter-dark, #3d3d3d);
+  --surface-secondary: var(--rh-color-surface-light-dark, #2d2d2d);
+  --surface-secondary-alt: var(--rh-color-surface-lighter-dark, #3d3d3d);
+  --surface-tertiary: var(--rh-color-surface-lighter-dark, #3d3d3d);
+  --surface-tertiary-alt: var(--rh-color-surface-base-dark, #1f1f1f);
+  --surface-dialog: var(--rh-color-surface-base-dark, #1f1f1f);
+  
+  /* Action colors - using RHDS dark status tokens */
+  --surface-submit: var(--rh-color-status-success-on-dark, #6ec664);
+  --surface-submit-hover: var(--rh-color-status-success-on-dark-hover, #5ba352);
+  --surface-destructive: var(--rh-color-status-danger-on-dark, #c9190b);
+  --surface-destructive-hover: var(--rh-color-status-danger-on-dark-hover, #a30000);
+  --surface-chat: var(--rh-color-surface-light-dark, #2d2d2d);
+  
+  /* Border colors - using RHDS dark border tokens */
+  --border-light: var(--rh-color-border-subtle-on-dark, #4d4d4d);
+  --border-medium-alt: var(--rh-color-border-default-on-dark, #6a6e73);
+  --border-medium: var(--rh-color-border-default-on-dark, #6a6e73);
+  --border-heavy: var(--rh-color-border-strong-on-dark, #8a8d90);
+  --border-xheavy: var(--rh-color-border-strong-on-dark, #b8bbbe);
   /* These are test styles */
 
   --background: 0 0% 7%;
@@ -373,6 +421,8 @@ article, section, aside, nav, header, footer, main {
 }
 
 /* Apply Red Hat Display to headings */
+/* Per UX guidelines: Use Red Hat Display for text >= 18px (titles and large text) */
+/* Use Red Hat Text for text < 18px (body text) */
 h1, h2, h3, h4, h5, h6,
 .heading,
 [class*="heading"] {
@@ -380,6 +430,26 @@ h1, h2, h3, h4, h5, h6,
   font-weight: var(--rh-font-weight-heading-md, 500);
   line-height: var(--rh-line-height-heading-md, 1.2);
   color: var(--rh-color-text-primary, #151515);
+}
+
+/* Ensure headings >= 18px use Red Hat Display */
+h1, h2, h3 {
+  font-size: clamp(1.125rem, 1.5vw + 0.5rem, 2.25rem); /* 18px minimum */
+}
+
+/* Smaller headings (h4, h5, h6) can use Red Hat Text if < 18px */
+h4, h5, h6 {
+  font-size: clamp(1rem, 1.2vw + 0.5rem, 1.5rem);
+  /* If font-size < 18px, use Red Hat Text; otherwise Display */
+  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif);
+}
+
+/* Force Display for h4+ when >= 18px */
+@media (min-width: 768px) {
+  h4 {
+    font-size: 1.125rem; /* 18px */
+    font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif);
+  }
 }
 
 /* Apply Red Hat Mono to code elements */
