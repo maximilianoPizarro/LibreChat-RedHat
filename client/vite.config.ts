@@ -200,14 +200,6 @@ export default defineConfig(({ command }) => ({
           // @librechat/client is externalized - it will be resolved via import map
           // The server handles /@ routes to allow import map resolution
           /^@librechat\/client/,
-          // Exclude peer dependencies that are external
-          'lucide-react',
-          // React and react-dom must be externalized to use from import map
-          // This prevents multiple React instances which causes "Cannot read properties of null" errors
-          'react',
-          'react-dom',
-          'react/jsx-runtime',
-          'react/jsx-dev-runtime',
           // @rhds/icons is externalized - it uses top-level await and is loaded from CDN via import map
           /^@rhds\/icons/,
         ],

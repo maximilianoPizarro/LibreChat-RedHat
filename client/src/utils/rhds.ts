@@ -20,7 +20,10 @@
 export async function loadRHDSElement(elementName: string): Promise<void> {
   try {
     // Dynamic import of RHDS elements
-    await import(`@rhds/elements/${elementName}/${elementName}.js`);
+    // @rhds/elements is now bundled by Vite, so we can import directly from node_modules
+    // In @rhds/elements@4.0.0, elements are in the 'elements/' subdirectory
+    // @vite-ignore - Dynamic import with template literal cannot be statically analyzed
+    await import(/* @vite-ignore */ `@rhds/elements/elements/${elementName}/${elementName}.js`);
   } catch (error) {
     console.warn(`Failed to load RHDS element: ${elementName}`, error);
   }

@@ -114,11 +114,9 @@ const startServer = async () => {
     console.warn('Response compression has been disabled via DISABLE_COMPRESSION.');
   }
 
-  // Serve static files - order matters: dist first, then fonts, then assets
-  // These middleware will call next() if file not found, allowing fallback to SPA
+  // Serve static files from dist - everything is in dist/assets after build
+  // Fonts and assets are copied to dist/assets during post-build
   app.use(staticCache(appConfig.paths.dist));
-  app.use(staticCache(appConfig.paths.fonts));
-  app.use(staticCache(appConfig.paths.assets));
   
   // Add explicit route for /src/* to serve from dist/src/*
   // This handles Vite's dev server paths in production

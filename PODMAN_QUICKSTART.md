@@ -87,7 +87,7 @@ podman compose -f podman-compose.frontend.yml up -d
 ```
 
 Esto ejecutará:
-- Frontend en http://localhost:8080
+- Frontend en http://localhost:3080
 - Backend en http://localhost:3080
 
 ## ⚙️ Variables Importantes en .env

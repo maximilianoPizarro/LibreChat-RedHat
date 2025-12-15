@@ -36,7 +36,7 @@ docker-compose -f docker-compose.frontend.yml up -d
 ```
 
 Esto iniciará:
-- Frontend en `http://localhost:8080`
+- Frontend en `http://localhost:3080`
 - Backend en `http://localhost:3080`
 
 ### Manualmente:

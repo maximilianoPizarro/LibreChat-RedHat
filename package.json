@@ -113,6 +113,7 @@
   "homepage": "https://librechat.ai/",
   "dependencies": {
     "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
+    "cross-env": "^7.0.3",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
@@ -123,7 +124,6 @@
     "@playwright/test": "^1.56.1",
     "@types/react-virtualized": "^9.22.0",
     "caniuse-lite": "^1.0.30001741",
-    "cross-env": "^7.0.3",
     "elliptic": "^6.6.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.0.1",

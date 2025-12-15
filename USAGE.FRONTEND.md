@@ -79,7 +79,7 @@ docker-compose -f docker-compose.frontend.yml up -d
 ## Acceso
 
 Una vez ejecutado, el frontend estará disponible en:
-- **URL**: `http://localhost:8080`
+- **URL**: `http://localhost:3080`
 
 ## Comandos Útiles
 

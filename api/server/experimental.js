@@ -255,9 +255,9 @@ if (cluster.isMaster) {
       logger.warn('Response compression has been disabled via DISABLE_COMPRESSION.');
     }
 
+    // Serve static files from dist - everything is in dist/assets after build
+    // Fonts and assets are copied to dist/assets during post-build
     app.use(staticCache(appConfig.paths.dist));
-    app.use(staticCache(appConfig.paths.fonts));
-    app.use(staticCache(appConfig.paths.assets));
 
     if (!ALLOW_SOCIAL_LOGIN) {
       logger.warn('Social logins are disabled. Set ALLOW_SOCIAL_LOGIN=true to enable them.');
