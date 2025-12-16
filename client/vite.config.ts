@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 import { compression } from 'vite-plugin-compression2';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { VitePWA } from 'vite-plugin-pwa';
+import fs from 'fs';
 
 // https://vitejs.dev/config/
 const backendPort = process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT) || 3080;
@@ -53,7 +54,8 @@ export default defineConfig(({ command }) => ({
   envPrefix: ['VITE_', 'SCRIPT_', 'DOMAIN_', 'ALLOW_'],
   plugins: [
     react(),
-    nodePolyfills(), 
+    nodePolyfills(),
+    transformImportMap(),
     VitePWA({
       injectRegister: 'auto', // 'auto' | 'manual' | 'disabled'
       registerType: 'autoUpdate', // 'prompt' | 'autoUpdate'
@@ -315,6 +317,48 @@ export function sourcemapExclude(opts?: SourcemapExclude): Plugin {
           map: { mappings: '' },
         };
       }
+    },
+  };
+}
+
+/**
+ * Plugin to transform import map in HTML during build
+ * Replaces /@librechat/client/ paths with relative paths for production
+ * Also transforms script tags with bare module specifiers to use import map paths
+ */
+function transformImportMap(): Plugin {
+  return {
+    name: 'transform-import-map',
+    transformIndexHtml(html, context) {
+      // Only transform during build, not in dev mode
+      if (context.server) {
+        return html;
+      }
+      
+      // Replace /@librechat/client/ with ./@librechat/client/ for production builds
+      // This handles both the import map and any direct script references
+      let transformed = html
+        .replace(/"\/@librechat\/client"/g, '"./@librechat/client"')
+        .replace(/"\/@librechat\/client\//g, '"./@librechat/client/');
+      
+      // Transform script tags with bare module specifiers to use import map paths
+      // This prevents the browser from trying to load @librechat/client directly
+      // Match: <script type="module" crossorigin src="@librechat/client"></script>
+      transformed = transformed.replace(
+        /<script([^>]*)\ssrc="@librechat\/client"([^>]*)><\/script>/g,
+        '<script$1 src="./@librechat/client/index.es.js"$2></script>'
+      );
+      
+      // Also handle @rhds/elements script tags with bare module specifiers
+      transformed = transformed.replace(
+        /<script([^>]*)\ssrc="@rhds\/elements\/react\/([^"]+)"([^>]*)><\/script>/g,
+        (match, attrs1, component, attrs2) => {
+          const componentPath = component.replace(/\.js$/, '');
+          return `<script${attrs1} src="https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/${componentPath}/index.js"${attrs2}></script>`;
+        }
+      );
+      
+      return transformed;
     },
   };
 }

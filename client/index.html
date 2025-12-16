@@ -35,11 +35,35 @@
     <script type="importmap">
       {
         "imports": {
+          "@rhds/tokens": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/js/tokens.js",
+          "@rhds/tokens/": "https://cdn.jsdelivr.net/npm/@rhds/tokens@3.0.2/",
+          
           "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
           "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
-          "@rhds/elements": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/elements.js",
-          "@rhds/elements/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/",
-          "@rhds/elements/react/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/",
+          
+          "@rhds/elements": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/index.js",
+          "@rhds/elements/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/",
+          
+          "@rhds/elements/react/rh-button": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-button/index.js",
+          "@rhds/elements/react/rh-button/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-button/",
+          "@rhds/elements/react/rh-card": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-card/index.js",
+          "@rhds/elements/react/rh-card/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-card/",
+          "@rhds/elements/react/rh-alert": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-alert/index.js",
+          "@rhds/elements/react/rh-alert/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-alert/",
+          "@rhds/elements/react/rh-dialog": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-dialog/index.js",
+          "@rhds/elements/react/rh-dialog/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-dialog/",
+          "@rhds/elements/react/rh-tabs": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tabs/index.js",
+          "@rhds/elements/react/rh-tabs/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tabs/",
+          "@rhds/elements/react/rh-badge": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-badge/index.js",
+          "@rhds/elements/react/rh-badge/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-badge/",
+          "@rhds/elements/react/rh-tooltip": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tooltip/index.js",
+          "@rhds/elements/react/rh-tooltip/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tooltip/",
+          "@rhds/elements/react/rh-popover": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-popover/index.js",
+          "@rhds/elements/react/rh-popover/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-popover/",
+          "@rhds/elements/react/rh-tooltip": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tooltip/index.js",
+          "@rhds/elements/react/rh-tooltip/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tooltip/",
+          "@rhds/elements/react/rh-tabs": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tabs/index.js",
+          "@rhds/elements/react/rh-tabs/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/rh-tabs/",
           
           "@librechat/client": "/@librechat/client/index.es.js",
           "@librechat/client/": "/@librechat/client/",
@@ -51,13 +75,26 @@
           
           "@lit/react": "https://cdn.jsdelivr.net/npm/@lit/react@1.0.4/+esm",
           "lit": "https://cdn.jsdelivr.net/npm/lit@3.1.2/+esm",
-          "lit/": "https://cdn.jsdelivr.net/npm/lit@3.1.2/"
+          "lit/": "https://cdn.jsdelivr.net/npm/lit@3.1.2/",
+          "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.1.2/+esm",
+          "lit-element": "https://cdn.jsdelivr.net/npm/lit-element@4.0.4/+esm",
+
+          "@radix-ui/react-accordion": "https://cdn.jsdelivr.net/npm/@radix-ui/react-accordion@1.1.2/+esm",
+          "@radix-ui/react-context": "https://cdn.jsdelivr.net/npm/@radix-ui/react-context@1.0.1/+esm",
+          "@radix-ui/react-id": "https://cdn.jsdelivr.net/npm/@radix-ui/react-id@1.0.1/+esm",
+          "@radix-ui/react-collection": "https://cdn.jsdelivr.net/npm/@radix-ui/react-collection@1.0.3/+esm",
+          "@radix-ui/react-direction": "https://cdn.jsdelivr.net/npm/@radix-ui/react-direction@1.0.1/+esm",
+          "@radix-ui/react-use-controllable-state": "https://cdn.jsdelivr.net/npm/@radix-ui/react-use-controllable-state@1.0.1/+esm",
+          "@radix-ui/primitive": "https://cdn.jsdelivr.net/npm/@radix-ui/primitive@1.0.1/+esm",
+          "@radix-ui/react-primitive": "https://cdn.jsdelivr.net/npm/@radix-ui/react-primitive@1.0.3/+esm",
+          "@radix-ui/react-collapsible": "https://cdn.jsdelivr.net/npm/@radix-ui/react-collapsible@1.0.3/+esm"
         },
         "scopes": {
           "https://cdn.jsdelivr.net/npm/": {
-            "@rhds/elements/react/": "https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/",
-            "react": "https://cdn.jsdelivr.net/npm/react@18.3.1/+esm",
-            "react/jsx-runtime": "https://cdn.jsdelivr.net/npm/react@18.3.1/jsx-runtime/+esm"
+             "react": "https://cdn.jsdelivr.net/npm/react@18.3.1/+esm",
+             "react/jsx-runtime": "https://cdn.jsdelivr.net/npm/react@18.3.1/jsx-runtime/+esm",
+             "react-dom": "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/+esm",
+             "lit": "https://cdn.jsdelivr.net/npm/lit@3.1.2/+esm"
           }
         }
       }
