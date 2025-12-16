@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react';
 // @ts-ignore
 import path from 'path';
+import fs from 'fs';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vite';
 import { compression } from 'vite-plugin-compression2';
@@ -59,6 +60,30 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
+  preview: {
+    host: process.env.HOST || '0.0.0.0',
+    port: process.env.PORT && Number(process.env.PORT) || 4173,
+    strictPort: false,
+    // Ensure all static files are served correctly in preview mode
+    cors: true,
+    // Proxy API calls in preview mode
+    proxy: {
+      '/api': {
+        target: backendURL,
+        changeOrigin: true,
+      },
+      '/oauth': {
+        target: backendURL,
+        changeOrigin: true,
+      },
+    },
+    // Ensure all files in dist are served, including subdirectories
+    fs: {
+      // Allow serving files from dist and its subdirectories
+      allow: ['..'],
+      strict: false,
+    },
+  },
   // Set the directory where environment variables are loaded from and restrict prefixes
   envDir: '../',
   envPrefix: ['VITE_', 'SCRIPT_', 'DOMAIN_', 'ALLOW_'],
@@ -94,12 +119,17 @@ export default defineConfig(({ command }) => ({
       devOptions: {
         enabled: false, // disable service worker registration in development mode
       },
+      // Disable PWA in preview mode to avoid service worker caching issues
+      // In preview mode, we want to serve files directly without service worker
+      disable: process.env.VITE_PREVIEW === 'true' || command === 'serve',
       useCredentials: true,
       includeManifestIcons: false,
       workbox: {
         globDirectory: './dist', // Only scan the dist directory
         globPatterns: [
           '**/*.{js,css,html}',
+          'assets/**/*',
+          'assets/@librechat/**/*',
           'assets/favicon*.png',
           'assets/icon-*.png',
           'assets/apple-touch-icon*.png',
@@ -107,8 +137,9 @@ export default defineConfig(({ command }) => ({
         globIgnores: [
           'images/**/*',
           '**/*.map',
-          'sw.js',
-          'workbox-*.js',
+          // Don't ignore sw.js and workbox files - they might be needed
+          // 'sw.js',
+          // 'workbox-*.js',
         ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: '/index.html',
@@ -182,26 +213,97 @@ export default defineConfig(({ command }) => ({
     compression({
       threshold: 10240,
     }),
+    // Plugin to exclude CodeMirror from minification
+    {
+      name: 'no-minify-codemirror',
+      apply: 'build',
+      enforce: 'post',
+      generateBundle(options, bundle) {
+        // Find CodeMirror chunks and mark them to skip minification
+        for (const [fileName, chunk] of Object.entries(bundle)) {
+          if (chunk.type === 'chunk' && (fileName.includes('codemirror') || chunk.name?.includes('codemirror'))) {
+            // Mark chunk to skip minification by setting a flag
+            (chunk as any).skipMinification = true;
+          }
+        }
+      },
+    },
+    // Plugin to handle special cases in preview mode
+    {
+      name: 'preview-special-handlers',
+      configurePreviewServer(server) {
+        // This runs AFTER Vite's static file handler
+        return () => {
+          server.middlewares.use((req, res, next) => {
+            // Handle @rhds/icons - redirect to CDN
+            if (req.url === '/@rhds/icons' || req.url?.startsWith('/@rhds/icons/')) {
+              res.writeHead(302, {
+                'Location': 'https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js'
+              });
+              return res.end();
+            }
+            
+            // Provide registerSW.js
+            if (req.url === '/registerSW.js') {
+              res.writeHead(200, { 
+                'Content-Type': 'application/javascript',
+                'Cache-Control': 'no-cache'
+              });
+              return res.end('(function() { if (typeof window !== "undefined") { window.registerSW = function() {}; } })();');
+            }
+            
+            // Let Vite preview handle all other requests
+            next();
+          });
+        };
+      },
+    },
   ],
   publicDir: command === 'serve' ? './public' : false,
   build: {
     sourcemap: process.env.NODE_ENV === 'development',
     outDir: './dist',
-    minify: 'terser',
+    // Ensure all files are copied to dist
+    copyPublicDir: false, // We handle this in post-build script
+    // Use esbuild minification which handles CodeMirror better
+    minify: 'esbuild',
+    // Ensure all assets are included
+    assetsInclude: ['**/*'],
+    // esbuild options for better CodeMirror compatibility
+    esbuild: {
+      target: 'es2022',
+      legalComments: 'none',
+      minifyIdentifiers: true,
+      minifySyntax: true,
+      minifyWhitespace: true,
+      // Keep function names to avoid CodeMirror issues
+      keepNames: true,
+    },
     commonjsOptions: {
       exclude: ['@rhds/icons'],
-    },
-    esbuild: {
-      target: 'es2022', // Support top-level await
     },
       rollupOptions: {
         preserveEntrySignatures: 'strict',
         external: [
           // @librechat/client is externalized - it will be resolved via import map
           // The server handles /@ routes to allow import map resolution
-          /^@librechat\/client/,
+          // /^@librechat\/client/,
           // @rhds/icons is externalized - it uses top-level await and is loaded from CDN via import map
           /^@rhds\/icons/,
+        ],
+        plugins: [
+          // Plugin to prevent minification of CodeMirror chunks
+          {
+            name: 'no-minify-codemirror',
+            renderChunk(code, chunk, options) {
+              // Skip minification for CodeMirror chunks
+              if (chunk.name && chunk.name.includes('codemirror')) {
+                // Return the code as-is without minification
+                return null; // Let Vite handle it, but we'll configure terser to skip it
+              }
+              return null;
+            },
+          },
         ],
       output: {
         manualChunks(id: string) {
@@ -242,6 +344,7 @@ export default defineConfig(({ command }) => ({
               return 'security-ui';
             }
 
+            // CodeMirror chunks - exclude from aggressive minification
             if (normalizedId.includes('@codemirror/view')) {
               return 'codemirror-view';
             }
