@@ -350,11 +350,19 @@ function transformImportMap(): Plugin {
       );
       
       // Also handle @rhds/elements script tags with bare module specifiers
+      // The script tags use paths like "@rhds/elements/react/rh-button/rh-button.js"
+      // Script tags don't use import maps, so we need to use direct CDN URLs
       transformed = transformed.replace(
         /<script([^>]*)\ssrc="@rhds\/elements\/react\/([^"]+)"([^>]*)><\/script>/g,
-        (match, attrs1, component, attrs2) => {
-          const componentPath = component.replace(/\.js$/, '');
-          return `<script${attrs1} src="https://cdn.jsdelivr.net/npm/@rhds/elements@3.0.0/react/${componentPath}/index.js"${attrs2}></script>`;
+        (match, attrs1, componentPath, attrs2) => {
+          // Extract component name from paths like "rh-button/rh-button.js" or "rh-button.js"
+          // The path might be "rh-button/rh-button.js", so we take the first part before the slash
+          let componentName = componentPath.split('/')[0];
+          // Remove .js extension if present
+          componentName = componentName.replace(/\.js$/, '');
+          // Use direct CDN URL since script tags don't respect import maps
+          // The import map is only used for imports within modules, not for script src attributes
+          return `<script${attrs1} src="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.0/react/${componentName}/${componentName}.js"${attrs2}></script>`;
         }
       );
       
