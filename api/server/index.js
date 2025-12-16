@@ -121,6 +121,9 @@ const startServer = async () => {
   // Add explicit route for /src/* to serve from dist/src/*
   // This handles Vite's dev server paths in production
   app.use('/src', staticCache(appConfig.paths.dist));
+
+  const clientPkgPath = path.resolve(__dirname, '..', '..', 'packages', 'client', 'dist');
+  app.use('/assets/@librechat/client', express.static(clientPkgPath));  
   
   // Proxy for @rhds/tokens/media.js - handle missing file gracefully
   app.get('/npm/@rhds/tokens@3.0.2/media.js', (req, res) => {
