@@ -13,6 +13,25 @@ const backendURL = process.env.HOST ? `http://${process.env.HOST}:${backendPort}
 
 export default defineConfig(({ command }) => ({
   base: '',
+  optimizeDeps: {
+     exclude: [
+      // Excluir paquetes que usan Top-Level Await y se cargan por Import Map (o fallarían)
+      '@rhds/icons',
+      '@rhds/elements',
+      '@rhds/elements/react',
+      '@rhds/elements/react/rh-button',
+      '@rhds/elements/react/rh-card',
+      '@rhds/elements/react/rh-alert',
+      '@rhds/elements/react/rh-dialog',
+      '@rhds/elements/react/rh-tabs',
+      '@rhds/elements/react/rh-badge',
+      '@rhds/elements/react/rh-tooltip',
+      '@rhds/elements/react/rh-popover',
+      '@rhds/elements/react/rh-tooltip',
+      '@rhds/elements/react/rh-tabs',
+      '@librechat/client',
+     ],
+    },  
   server: {
     allowedHosts: process.env.VITE_ALLOWED_HOSTS && process.env.VITE_ALLOWED_HOSTS.split(',') || [],
     host: process.env.HOST || 'localhost',
@@ -109,10 +128,19 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       preserveEntrySignatures: 'strict',
       external: [
-        // [1] Paquetes para Import Map
-        /^@librechat\/client/,
         /^@rhds\/icons/,
         /^@rhds\/elements/,
+        /^@rhds\/elements\/react/,  
+        /^@rhds\/elements\/react\/rh-button/,
+        /^@rhds\/elements\/react\/rh-card/,
+        /^@rhds\/elements\/react\/rh-alert/,
+        /^@rhds\/elements\/react\/rh-dialog/,
+        /^@rhds\/elements\/react\/rh-tabs/,
+        /^@rhds\/elements\/react\/rh-badge/,
+        /^@rhds\/elements\/react\/rh-tooltip/,
+        /^@rhds\/elements\/react\/rh-popover/,
+        /^@rhds\/elements\/react\/rh-tabs/,
+        /^@librechat\/client/,
       ],
       output: {
         manualChunks(id: string) {
@@ -266,6 +294,8 @@ export default defineConfig(({ command }) => ({
       '~': path.join(__dirname, 'src/'),
       $fonts: path.resolve(__dirname, 'public/fonts'),
       'micromark-extension-math': 'micromark-extension-llm-math',
+      '@librechat/client': path.resolve(__dirname, '../packages/client/dist/index.es.js'),
+      '@librechat/client/': path.resolve(__dirname, '../packages/client/dist/'),
     },
   },
 }));
