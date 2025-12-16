@@ -31,12 +31,12 @@
     <!-- Only needed for modules marked as "external" in vite.config.ts -->
     <!-- @rhds/elements is bundled by Vite from node_modules, so it doesn't need importmap -->
     <!-- @rhds/tokens is imported as CSS, not as a JS module -->
+    
     <script type="importmap">
       {
         "imports": {
           "@rhds/icons": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/icons.js",
-          "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/",
-          "@librechat/client": "/assets/@librechat/client/index.es.js"
+          "@rhds/icons/": "https://cdn.jsdelivr.net/npm/@rhds/icons@2.0.0/"
         },
         "scopes": {
           "https://cdn.jsdelivr.net/npm/": {
