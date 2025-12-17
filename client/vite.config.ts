@@ -1,38 +1,21 @@
 import react from '@vitejs/plugin-react';
-// @ts-ignore
 import path from 'path';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vite';
 import { compression } from 'vite-plugin-compression2';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { VitePWA } from 'vite-plugin-pwa';
-import fs from 'fs';
 
-// https://vitejs.dev/config/
 const backendPort = process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT) || 3080;
 const backendURL = process.env.HOST ? `http://${process.env.HOST}:${backendPort}` : `http://localhost:${backendPort}`;
 
 export default defineConfig(({ command }) => ({
-  base: '',
+  base: '/',
+  
   optimizeDeps: {
-     exclude: [
-      // Excluir paquetes que usan Top-Level Await y se cargan por Import Map (o fallarían)
-      '@rhds/icons',
-      '@rhds/elements',
-      '@rhds/elements/react',
-      '@rhds/elements/react/rh-button',
-      '@rhds/elements/react/rh-card',
-      '@rhds/elements/react/rh-alert',
-      '@rhds/elements/react/rh-dialog',
-      '@rhds/elements/react/rh-tabs',
-      '@rhds/elements/react/rh-badge',
-      '@rhds/elements/react/rh-tooltip',
-      '@rhds/elements/react/rh-popover',
-      '@rhds/elements/react/rh-tooltip',
-      '@rhds/elements/react/rh-tabs',
-      '@librechat/client',
-     ],
-    },  
+    exclude: ['@rhds/*'],
+  },
+  
   server: {
     allowedHosts: process.env.VITE_ALLOWED_HOSTS && process.env.VITE_ALLOWED_HOSTS.split(',') || [],
     host: process.env.HOST || 'localhost',
@@ -49,18 +32,18 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
-  // Set the directory where environment variables are loaded from and restrict prefixes
+  
   envDir: '../',
   envPrefix: ['VITE_', 'SCRIPT_', 'DOMAIN_', 'ALLOW_'],
+  
   plugins: [
     react(),
     nodePolyfills(),
-    transformImportMap(),
     VitePWA({
-      injectRegister: 'auto', // 'auto' | 'manual' | 'disabled'
-      registerType: 'autoUpdate', // 'prompt' | 'autoUpdate'
+      injectRegister: 'auto',
+      registerType: 'autoUpdate',
       devOptions: {
-        enabled: false, // disable service worker registration in development mode
+        enabled: false,
       },
       useCredentials: true,
       includeManifestIcons: false,
@@ -74,7 +57,7 @@ export default defineConfig(({ command }) => ({
           'manifest.webmanifest',
         ],
         globIgnores: ['images/**/*', '**/*.map', 'index.html'],
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 13 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/oauth/, /^\/api/],
       },
       includeAssets: [],
@@ -115,175 +98,37 @@ export default defineConfig(({ command }) => ({
       },
     }),
     sourcemapExclude({ excludeNodeModules: true }),
-    compression({
-      threshold: 10240,
-    }),
+    compression({ threshold: 10240 }),
   ],
+  
   publicDir: command === 'serve' ? './public' : false,
+  
   build: {
+    target: 'ES2022',
     sourcemap: process.env.NODE_ENV === 'development',
     outDir: './dist',
     minify: 'terser',
-    esbuild: {
-      target: 'es2022',
-      },    
+    copyPublicDir: true,
+    
     rollupOptions: {
-      preserveEntrySignatures: 'strict',
-      external: [
-        /^@rhds\/icons/,
-        /^@rhds\/elements/,
-        /^@rhds\/elements\/react/,  
-        /^@rhds\/elements\/react\/rh-button/,
-        /^@rhds\/elements\/react\/rh-card/,
-        /^@rhds\/elements\/react\/rh-alert/,
-        /^@rhds\/elements\/react\/rh-dialog/,
-        /^@rhds\/elements\/react\/rh-tabs/,
-        /^@rhds\/elements\/react\/rh-badge/,
-        /^@rhds\/elements\/react\/rh-tooltip/,
-        /^@rhds\/elements\/react\/rh-popover/,
-        /^@rhds\/elements\/react\/rh-tabs/,
-        /^@librechat\/client/,
-      ],
+      external: ['@rhds/elements', '@rhds/icons'],
+      
       output: {
-        manualChunks(id: string) {
-          const normalizedId = id.replace(/\\/g, '/');
-          if (normalizedId.includes('node_modules')) {
-            // High-impact chunking for large libraries
-            if (normalizedId.includes('@codesandbox/sandpack')) {
-              return 'sandpack';
-            }
-            if (normalizedId.includes('react-virtualized')) {
-              return 'virtualization';
-            }
-            if (normalizedId.includes('i18next') || normalizedId.includes('react-i18next')) {
-              return 'i18n';
-            }
-            if (normalizedId.includes('lodash')) {
-              return 'utilities';
-            }
-            if (normalizedId.includes('date-fns')) {
-              return 'date-utils';
-            }
-            if (normalizedId.includes('@dicebear')) {
-              return 'avatars';
-            }
-            if (normalizedId.includes('react-dnd') || normalizedId.includes('react-flip-toolkit')) {
-              return 'react-interactions';
-            }
-            if (normalizedId.includes('react-hook-form')) {
-              return 'forms';
-            }
-            if (normalizedId.includes('react-router-dom')) {
-              return 'routing';
-            }
-            if (
-              normalizedId.includes('qrcode.react') ||
-              normalizedId.includes('@marsidev/react-turnstile')
-            ) {
-              return 'security-ui';
-            }
-
-            if (normalizedId.includes('@codemirror/view')) {
-              return 'codemirror-view';
-            }
-            if (normalizedId.includes('@codemirror/state')) {
-              return 'codemirror-state';
-            }
-            if (normalizedId.includes('@codemirror/language')) {
-              return 'codemirror-language';
-            }
-            if (normalizedId.includes('@codemirror')) {
-              return 'codemirror-core';
-            }
-
-            if (
-              normalizedId.includes('react-markdown') ||
-              normalizedId.includes('remark-') ||
-              normalizedId.includes('rehype-')
-            ) {
-              return 'markdown-processing';
-            }
-            if (normalizedId.includes('monaco-editor') || normalizedId.includes('@monaco-editor')) {
-              return 'code-editor';
-            }
-            if (normalizedId.includes('react-window') || normalizedId.includes('react-virtual')) {
-              return 'virtualization';
-            }
-            if (
-              normalizedId.includes('zod') ||
-              normalizedId.includes('yup') ||
-              normalizedId.includes('joi')
-            ) {
-              return 'validation';
-            }
-            if (
-              normalizedId.includes('axios') ||
-              normalizedId.includes('ky') ||
-              normalizedId.includes('fetch')
-            ) {
-              return 'http-client';
-            }
-            if (
-              normalizedId.includes('react-spring') ||
-              normalizedId.includes('react-transition-group')
-            ) {
-              return 'animations';
-            }
-            if (normalizedId.includes('react-select') || normalizedId.includes('downshift')) {
-              return 'advanced-inputs';
-            }
-            if (normalizedId.includes('heic-to')) {
-              return 'heic-converter';
-            }
-
-            // Existing chunks
-            if (normalizedId.includes('@radix-ui')) {
-              return 'radix-ui';
-            }
-            if (normalizedId.includes('framer-motion')) {
-              return 'framer-motion';
-            }
-            if (normalizedId.includes('node_modules/highlight.js')) {
-              return 'markdown_highlight';
-            }
-            if (normalizedId.includes('katex') || normalizedId.includes('node_modules/katex')) {
-              return 'math-katex';
-            }
-            if (normalizedId.includes('node_modules/hast-util-raw')) {
-              return 'markdown_large';
-            }
-            if (normalizedId.includes('@tanstack')) {
-              return 'tanstack-vendor';
-            }
-            if (normalizedId.includes('@headlessui')) {
-              return 'headlessui';
-            }
-
-            // Everything else falls into a generic vendor chunk.
-            return 'vendor';
-          }
-          // Create a separate chunk for all locale files under src/locales.
-          if (normalizedId.includes('/src/locales/')) {
-            return 'locales';
-          }
-          // Let Rollup decide automatically for any other files.
-          return null;
-        },
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
         assetFileNames: (assetInfo) => {
-          if (assetInfo.names?.[0] && /\.(woff|woff2|eot|ttf|otf)$/.test(assetInfo.names[0])) {
+          if (assetInfo.names?.[0]?.match(/\.(woff2?|eot|ttf|otf)$/)) {
             return 'assets/fonts/[name][extname]';
           }
           return 'assets/[name].[hash][extname]';
         },
       },
-      /**
-       * Ignore "use client" warning since we are not using SSR
-       * @see {@link https://github.com/TanStack/query/pull/5161#issuecomment-1477389761 Preserve 'use client' directives TanStack/query#5161}
-       */
+      
       onwarn(warning, warn) {
-        if (warning.message.includes('Error when using sourcemap')) {
+        if (
+          warning.message.includes('Error when using sourcemap') ||
+          warning.message.includes('"use client"')
+        ) {
           return;
         }
         warn(warning);
@@ -291,13 +136,12 @@ export default defineConfig(({ command }) => ({
     },
     chunkSizeWarningLimit: 1500,
   },
+  
   resolve: {
     alias: {
       '~': path.join(__dirname, 'src/'),
-      $fonts: path.resolve(__dirname, 'public/fonts'),
+      '$fonts': path.resolve(__dirname, 'public/fonts'),
       'micromark-extension-math': 'micromark-extension-llm-math',
-      '@librechat/client': path.resolve(__dirname, '../packages/client/dist/index.es.js'),
-      '@librechat/client/': path.resolve(__dirname, '../packages/client/dist/'),
     },
   },
 }));
@@ -306,67 +150,13 @@ interface SourcemapExclude {
   excludeNodeModules?: boolean;
 }
 
-export function sourcemapExclude(opts?: SourcemapExclude): Plugin {
+function sourcemapExclude(opts?: { excludeNodeModules?: boolean }): Plugin {
   return {
     name: 'sourcemap-exclude',
-    transform(code: string, id: string) {
+    transform(code, id) {
       if (opts?.excludeNodeModules && id.includes('node_modules')) {
-        return {
-          code,
-          // https://github.com/rollup/rollup/blob/master/docs/plugin-development/index.md#source-code-transformations
-          map: { mappings: '' },
-        };
+        return { code, map: { mappings: '' } };
       }
-    },
-  };
-}
-
-/**
- * Plugin to transform import map in HTML during build
- * Replaces /@librechat/client/ paths with relative paths for production
- * Also transforms script tags with bare module specifiers to use import map paths
- */
-function transformImportMap(): Plugin {
-  return {
-    name: 'transform-import-map',
-    transformIndexHtml(html, context) {
-      // Only transform during build, not in dev mode
-      if (context.server) {
-        return html;
-      }
-      
-      // Replace /@librechat/client/ with ./@librechat/client/ for production builds
-      // This handles both the import map and any direct script references
-      let transformed = html
-        .replace(/"\/@librechat\/client"/g, '"./@librechat/client"')
-        .replace(/"\/@librechat\/client\//g, '"./@librechat/client/');
-      
-      // Transform script tags with bare module specifiers to use import map paths
-      // This prevents the browser from trying to load @librechat/client directly
-      // Match: <script type="module" crossorigin src="@librechat/client"></script>
-      transformed = transformed.replace(
-        /<script([^>]*)\ssrc="@librechat\/client"([^>]*)><\/script>/g,
-        '<script$1 src="./@librechat/client/index.es.js"$2></script>'
-      );
-      
-      // Also handle @rhds/elements script tags with bare module specifiers
-      // The script tags use paths like "@rhds/elements/react/rh-button/rh-button.js"
-      // Script tags don't use import maps, so we need to use direct CDN URLs
-      transformed = transformed.replace(
-        /<script([^>]*)\ssrc="@rhds\/elements\/react\/([^"]+)"([^>]*)><\/script>/g,
-        (match, attrs1, componentPath, attrs2) => {
-          // Extract component name from paths like "rh-button/rh-button.js" or "rh-button.js"
-          // The path might be "rh-button/rh-button.js", so we take the first part before the slash
-          let componentName = componentPath.split('/')[0];
-          // Remove .js extension if present
-          componentName = componentName.replace(/\.js$/, '');
-          // Use direct CDN URL since script tags don't respect import maps
-          // The import map is only used for imports within modules, not for script src attributes
-          return `<script${attrs1} src="https://cdn.jsdelivr.net/npm/@rhds/elements@4.0.0/react/${componentName}/${componentName}.js"${attrs2}></script>`;
-        }
-      );
-      
-      return transformed;
     },
   };
 }
