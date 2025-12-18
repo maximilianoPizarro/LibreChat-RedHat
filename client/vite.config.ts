@@ -25,6 +25,13 @@ export default defineConfig(({ command }) => ({
   
   optimizeDeps: {
     exclude: ['@rhds/*'],
+    esbuildOptions: {
+      target: 'ES2022',
+    },
+  },
+  
+  esbuild: {
+    target: 'ES2022',
   },
   
   server: {
