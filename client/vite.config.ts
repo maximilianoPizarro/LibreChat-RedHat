@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { readFileSync } from 'fs';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vite';
 import { compression } from 'vite-plugin-compression2';
@@ -8,6 +9,16 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const backendPort = process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT) || 3080;
 const backendURL = process.env.HOST ? `http://${process.env.HOST}:${backendPort}` : `http://localhost:${backendPort}`;
+
+// Get peer dependencies from @librechat/client package
+let clientPeerDeps: string[] = [];
+try {
+  const clientPkgPath = path.join(__dirname, '../packages/client/package.json');
+  const clientPkg = JSON.parse(readFileSync(clientPkgPath, 'utf-8'));
+  clientPeerDeps = Object.keys(clientPkg.peerDependencies || {});
+} catch (e) {
+  // fallback if import fails
+}
 
 export default defineConfig(({ command }) => ({
   base: '/',
@@ -111,7 +122,11 @@ export default defineConfig(({ command }) => ({
     copyPublicDir: true,
     
     rollupOptions: {
-      external: ['@rhds/elements', '@rhds/icons'],
+      external: [
+        '@rhds/elements',
+        '@rhds/icons',
+        ...clientPeerDeps,
+      ],
       
       output: {
         entryFileNames: 'assets/[name].[hash].js',

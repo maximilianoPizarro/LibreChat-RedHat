@@ -63,8 +63,13 @@ RUN \
 COPY --chown=1001:1001 . .
 
 RUN \
-    # React client build
-    NODE_OPTIONS="--max-old-space-size=2048" npm run frontend; \
+    # Build all packages including frontend
+    # The frontend Dockerfile will copy the compiled dist from this stage
+    npm run build:data-provider && \
+    npm run build:data-schemas && \
+    npm run build:api && \
+    npm run build:client-package && \
+    cd client && npm run build && cd .. && \
     npm prune --production; \
     npm cache clean --force
 
