@@ -24,7 +24,6 @@ export default defineConfig(({ command }) => ({
   base: '/',
   
   optimizeDeps: {
-    exclude: ['@rhds/*'],
     esbuildOptions: {
       target: 'ES2022',
     },
@@ -129,12 +128,6 @@ export default defineConfig(({ command }) => ({
     copyPublicDir: true,
     
     rollupOptions: {
-      external: [
-        '@rhds/elements',
-        '@rhds/icons',
-        ...clientPeerDeps,
-      ],
-      
       output: {
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
