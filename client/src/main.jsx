@@ -2,6 +2,8 @@ import 'regenerator-runtime/runtime';
 import { createRoot } from 'react-dom/client';
 import './locales/i18n';
 import App from './App';
+// Import Red Hat Design System tokens first
+import '@rhds/tokens/css/global.css';
 import './style.css';
 import './mobile.css';
 import { ApiErrorBoundaryProvider } from './hooks/ApiErrorBoundaryContext';

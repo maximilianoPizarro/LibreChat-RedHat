@@ -20,12 +20,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
     
     <!-- Red Hat Design System Tokens CSS -->
-    <!-- Official documentation: https://ux.redhat.com/get-started/developers/installation/#red-hat-cdn -->
-    <link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/default-theme.css">
-    <!-- Red Hat Design System Fonts -->
-    <!-- Load Red Hat fonts from CDN -->
-    <link rel="preconnect" href="https://www.redhatstatic.com">
-    <link rel="stylesheet" href="https://www.redhatstatic.com/dssf-001/v2/@rhds/tokens@3.0.2/css/global.css">
+    <!-- Note: RHDS tokens are loaded via @rhds/tokens npm package in style.css -->
+    <!-- This ensures consistent styling and avoids CDN dependency issues -->
+    <!-- Official documentation: https://ux.redhat.com/get-started/developers/installation/#npm -->
     
     <style>
       html,
