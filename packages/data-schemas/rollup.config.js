@@ -41,5 +41,5 @@ export default {
     }),
   ],
   // Do not bundle these external dependencies
-  external: ['mongoose', 'winston-daily-rotate-file'],
+  external: ['mongoose', 'winston-daily-rotate-file', 'dotenv', 'dotenv/config'],
 };

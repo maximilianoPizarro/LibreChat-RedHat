@@ -151,7 +151,7 @@ const startServer = async () => {
 
   // Proxy for @patternfly/pfe-core@2.14.0 - intercept CDN requests
   // This handles requests that browsers make directly to CDN via import maps
-  app.get('/npm/@patternfly/pfe-core@2.14.0/*', async (req, res) => {
+  app.get('/npm/@patternfly/pfe-core@2.14.0/*path', async (req, res) => {
     try {
       const targetPath = req.path.replace('/npm/@patternfly/pfe-core@2.14.0', '/npm/@patternfly/pfe-core@5.0.3');
       const targetUrl = `https://cdn.jsdelivr.net${targetPath}`;
@@ -207,7 +207,7 @@ const startServer = async () => {
   });
   
   // Also proxy @patternfly/pfe-core@5.0.3 requests through server
-  app.get('/npm/@patternfly/pfe-core@5.0.3/*', async (req, res) => {
+  app.get('/npm/@patternfly/pfe-core@5.0.3/*path', async (req, res) => {
     try {
       const targetUrl = `https://cdn.jsdelivr.net${req.path}`;
       logger.debug(`Proxying @patternfly/pfe-core@5.0.3 request: ${targetUrl}`);

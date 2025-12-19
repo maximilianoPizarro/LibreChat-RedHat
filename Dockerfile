@@ -72,8 +72,9 @@ RUN \
     cd client && npm run build && cd .. && \
     npm prune --production && \
     # Ensure winston-daily-rotate-file is available after prune (it's needed at runtime)
-    # Install in root and in packages/data-schemas workspace
+    # Install in root, api workspace, and packages/data-schemas workspace
     npm install --production --no-save winston-daily-rotate-file@^5.0.0 && \
+    cd api && npm install --production --no-save winston-daily-rotate-file@^5.0.0 && cd .. && \
     cd packages/data-schemas && npm install --production --no-save winston-daily-rotate-file@^5.0.0 && cd ../.. && \
     npm cache clean --force
 
