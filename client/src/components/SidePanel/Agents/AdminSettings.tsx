@@ -36,7 +36,7 @@ const LabelController: React.FC<LabelControllerProps> = ({
 }) => (
   <div className="mb-4 flex items-center justify-between gap-2">
     <button
-      className="cursor-pointer select-none"
+      className="cursor-pointer select-none text-text-primary"
       type="button"
       onClick={() =>
         setValue(agentPerm, !getValues(agentPerm), {
@@ -218,7 +218,8 @@ const AdminSettings = () => {
                 type="button"
                 onClick={handleSubmit(onSubmit)}
                 disabled={isSubmitting || isLoading}
-                className="btn rounded bg-green-500 font-bold text-white transition-all hover:bg-green-600 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-primary"
+                className="btn btn-primary rounded font-bold text-white transition-all focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring-primary"
+                style={{ backgroundColor: '#EE0000', borderColor: '#EE0000' }}
               >
                 {localize('com_ui_save')}
               </button>

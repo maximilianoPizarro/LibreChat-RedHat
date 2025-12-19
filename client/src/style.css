@@ -147,8 +147,8 @@ html {
   --surface-dialog: var(--rh-color-surface-base, var(--white));
   
   /* Action colors - using RHDS status tokens */
-  --surface-submit: var(--rh-color-status-success-on-light, #3e8635);
-  --surface-submit-hover: var(--rh-color-status-success-on-light-hover, #2d6a24);
+  --surface-submit: #EE0000;
+  --surface-submit-hover: #CC0000;
   --surface-destructive: var(--rh-color-status-danger-on-light, #c9190b);
   --surface-destructive-hover: var(--rh-color-status-danger-on-light-hover, #a30000);
   --surface-chat: var(--rh-color-surface-base, var(--white));
@@ -222,8 +222,8 @@ html {
   --surface-dialog: var(--rh-color-surface-base-dark, #1f1f1f);
   
   /* Action colors - using RHDS dark status tokens */
-  --surface-submit: var(--rh-color-status-success-on-dark, #6ec664);
-  --surface-submit-hover: var(--rh-color-status-success-on-dark-hover, #5ba352);
+  --surface-submit: #EE0000;
+  --surface-submit-hover: #CC0000;
   --surface-destructive: var(--rh-color-status-danger-on-dark, #c9190b);
   --surface-destructive-hover: var(--rh-color-status-danger-on-dark-hover, #a30000);
   --surface-chat: var(--rh-color-surface-light-dark, #2d2d2d);
@@ -3154,11 +3154,11 @@ rh-button[variant="primary"].redhat-red-button:hover::part(base) {
 .dark #chat-history-nav rh-button[data-testid="nav-new-chat-button"],
 .dark #chat-history-nav rh-button[variant="tertiary"],
 .dark #chat-history-nav rh-button[variant="primary"] {
-  --rh-button-tertiary-color: var(--rh-color-text-primary-on-dark, #ffffff);
+  --rh-button-tertiary-color: #EE0000 !important;
   --rh-button-tertiary-hover-background-color: rgba(238, 0, 0, 0.2);
   --rh-button-tertiary-hover-color: #ff3333;
   --rh-button-tertiary-focus-ring-color: #ff3333;
-  --rh-button-primary-color: var(--rh-color-text-primary-on-dark, #ffffff);
+  --rh-button-primary-color: #EE0000 !important;
   --rh-button-primary-hover-background-color: rgba(238, 0, 0, 0.2);
   --rh-button-primary-hover-color: #ff3333;
   --rh-button-primary-focus-ring-color: #ff3333;
@@ -3179,6 +3179,36 @@ rh-button[variant="primary"].redhat-red-button:hover::part(base) {
   min-width: 32px !important;
   min-height: 32px !important;
   padding: 0.375rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Bookmark button styling */
+#chat-history-nav button#bookmark-menu-button {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: var(--rh-color-text-primary, #151515) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dark #chat-history-nav button#bookmark-menu-button {
+  color: #EE0000 !important;
+}
+
+#chat-history-nav button#bookmark-menu-button:hover {
+  background-color: rgba(238, 0, 0, 0.1) !important;
+  color: #EE0000 !important;
+}
+
+.dark #chat-history-nav button#bookmark-menu-button:hover {
+  background-color: rgba(238, 0, 0, 0.2) !important;
+  color: #ff3333 !important;
 }
 
 #chat-history-nav rh-button.nav-button-red:hover::part(base),
@@ -3206,7 +3236,7 @@ rh-button[variant="primary"].redhat-red-button:hover::part(base) {
 .dark #chat-history-nav rh-button[data-testid="nav-new-chat-button"]::part(base),
 .dark #chat-history-nav rh-button[variant="tertiary"]::part(base),
 .dark #chat-history-nav rh-button[variant="primary"]::part(base) {
-  color: var(--rh-color-text-primary-on-dark, #ffffff) !important;
+  color: #EE0000 !important;
 }
 
 .dark #chat-history-nav rh-button.nav-button-red:hover::part(base),

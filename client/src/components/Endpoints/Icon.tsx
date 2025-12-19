@@ -35,6 +35,14 @@ const UserAvatar = memo(({ size, user, avatarSrc, username, className }: UserAva
     </div>
   );
 
+  // Reset imageError when avatar changes
+  React.useEffect(() => {
+    setImageError(false);
+  }, [user?.avatar, avatarSrc]);
+
+  const hasAvatar = !!(user?.avatar ?? '') || !!avatarSrc;
+  const shouldShowAvatar = hasAvatar && !imageError;
+
   return (
     <div
       title={username}
@@ -44,16 +52,16 @@ const UserAvatar = memo(({ size, user, avatarSrc, username, className }: UserAva
       }}
       className={cn('relative flex items-center justify-center', className ?? '')}
     >
-      {(!(user?.avatar ?? '') && (!(user?.username ?? '') || user?.username.trim() === '')) ||
-      imageError ? (
-        renderDefaultAvatar()
-      ) : (
+      {shouldShowAvatar ? (
         <img
+          key={user?.avatar || avatarSrc}
           className="rounded-full"
           src={(user?.avatar ?? '') || avatarSrc}
           alt="avatar"
           onError={handleImageError}
         />
+      ) : (
+        renderDefaultAvatar()
       )}
     </div>
   );

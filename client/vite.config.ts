@@ -145,6 +145,11 @@ export default defineConfig(({ command }) => ({
         },
       },
       
+      external: (id) => {
+        // Don't externalize @radix-ui packages - they need to be bundled
+        return false;
+      },
+      
       onwarn(warning, warn) {
         if (
           warning.message.includes('Error when using sourcemap') ||
@@ -163,6 +168,8 @@ export default defineConfig(({ command }) => ({
       '~': path.join(__dirname, 'src/'),
       '$fonts': path.resolve(__dirname, 'public/fonts'),
       'micromark-extension-math': 'micromark-extension-llm-math',
+      // Force resolution of @radix-ui/react-slot to root version
+      '@radix-ui/react-slot': path.resolve(__dirname, '../node_modules/@radix-ui/react-slot'),
     },
     // Dedupe all peer dependencies from @librechat/client to ensure they resolve correctly
     // Also dedupe all @radix-ui packages to avoid version conflicts
@@ -177,21 +184,8 @@ export default defineConfig(({ command }) => ({
       '@radix-ui/react-collection',
       '@radix-ui/react-context',
       '@radix-ui/react-compose-refs',
+      '@radix-ui/react-select',
     ],
-  },
-  
-  // Force Vite to resolve @radix-ui packages from root node_modules to avoid nested version conflicts
-  optimizeDeps: {
-    esbuildOptions: {
-      target: 'ES2022',
-    },
-    include: [
-      'framer-motion',
-      '@react-spring/web',
-      ...clientPeerDeps,
-    ],
-    // Force resolution of nested @radix-ui dependencies
-    force: true,
   },
 }));
 

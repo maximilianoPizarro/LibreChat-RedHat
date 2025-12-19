@@ -37,7 +37,7 @@ const LabelController: React.FC<LabelControllerProps> = ({
   confirmChange,
 }) => (
   <div className="mb-4 flex items-center justify-between gap-2">
-    {label}
+    <span className="text-text-primary">{label}</span>
     <Controller
       name={promptPerm}
       control={control}

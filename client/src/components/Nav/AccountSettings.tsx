@@ -1,13 +1,13 @@
 import { useState, memo, useRef } from 'react';
 import * as Select from '@ariakit/react/select';
 import { FileText, LogOut } from 'lucide-react';
-import { LinkIcon, GearIcon, DropdownMenuSeparator } from '@librechat/client';
+import { LinkIcon, GearIcon, DropdownMenuSeparator, useAvatar } from '@librechat/client';
 import { MyFilesModal } from '~/components/Chat/Input/Files/MyFilesModal';
 import { useGetStartupConfig, useGetUserBalance } from '~/data-provider';
 import { useAuthContext } from '~/hooks/AuthContext';
 import { useLocalize } from '~/hooks';
 import Settings from './Settings';
-import RedHatLogo from '~/components/RedHatLogo';
+import Icon from '~/components/Endpoints/Icon';
 
 function AccountSettings() {
   const localize = useLocalize();
@@ -30,7 +30,7 @@ function AccountSettings() {
       >
         <div className="-ml-0.9 -mt-0.8 h-8 w-8 flex-shrink-0">
           <div className="relative flex items-center justify-center">
-            <RedHatLogo size={32} className="rounded-full" />
+            <Icon key={user?.avatar || user?.id} size={32} isCreatedByUser={true} className="rounded-full" />
           </div>
         </div>
         <div

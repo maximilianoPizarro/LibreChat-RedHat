@@ -60,10 +60,6 @@ function AuthLayout({
   return (
     <div className="relative flex min-h-screen flex-col bg-[#f0f0f0] dark:bg-[#151515]">
       <Banner />
-      {/* Red Hat Logo at top - similar to SSO page */}
-      <div className="mt-6 mb-2 flex justify-center">
-        <RedHatLogo size={60} className="opacity-100" />
-      </div>
       <DisplayError />
       <div className="absolute bottom-0 left-0 md:m-4">
         <ThemeSelector />
@@ -71,6 +67,10 @@ function AuthLayout({
 
       <main className="flex flex-grow items-center justify-center px-4 py-8">
         <div className="w-authPageWidth overflow-hidden bg-white px-8 py-8 dark:bg-[#1f1f1f] sm:max-w-md sm:rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          {/* Red Hat Logo above Welcome back */}
+          <div className="mt-4 mb-4 flex justify-center">
+            <RedHatLogo size={60} className="opacity-100" />
+          </div>
           {!hasStartupConfigError && !isFetching && header && (
             <h1
               className="mb-6 text-center text-2xl font-semibold text-black dark:text-white font-heading"

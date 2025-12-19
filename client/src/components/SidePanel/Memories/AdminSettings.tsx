@@ -29,7 +29,7 @@ type LabelControllerProps = {
 
 const LabelController: React.FC<LabelControllerProps> = ({ control, memoryPerm, label }) => (
   <div className="mb-4 flex items-center justify-between gap-2">
-    {label}
+    <span className="text-text-primary">{label}</span>
     <Controller
       name={memoryPerm}
       control={control}
@@ -206,7 +206,7 @@ const AdminSettings = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || isLoading}
-                className="btn rounded bg-green-500 font-bold text-white transition-all hover:bg-green-600 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+                className="btn rounded bg-red-600 font-bold text-white transition-all hover:bg-red-700 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
               >
                 {localize('com_ui_save')}
               </button>
