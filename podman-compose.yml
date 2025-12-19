@@ -18,7 +18,7 @@ services:
       dockerfile: Dockerfile
       tags:
         - quay.io/maximilianopizarro/redhat-chat:latest
-        - quay.io/maximilianopizarro/redhat-chat:v0.8.1-rc2
+        - quay.io/maximilianopizarro/redhat-chat:v0.8.2-rc1
     restart: always
     extra_hosts:
       - "host.podman.internal:host-gateway"

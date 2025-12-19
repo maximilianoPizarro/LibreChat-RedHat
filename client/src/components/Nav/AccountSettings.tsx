@@ -1,12 +1,13 @@
 import { useState, memo, useRef } from 'react';
 import * as Select from '@ariakit/react/select';
 import { FileText, LogOut } from 'lucide-react';
-import { LinkIcon, GearIcon, DropdownMenuSeparator, Avatar } from '@librechat/client';
+import { LinkIcon, GearIcon, DropdownMenuSeparator } from '@librechat/client';
 import { MyFilesModal } from '~/components/Chat/Input/Files/MyFilesModal';
 import { useGetStartupConfig, useGetUserBalance } from '~/data-provider';
 import { useAuthContext } from '~/hooks/AuthContext';
 import { useLocalize } from '~/hooks';
 import Settings from './Settings';
+import RedHatLogo from '~/components/RedHatLogo';
 
 function AccountSettings() {
   const localize = useLocalize();
@@ -28,13 +29,17 @@ function AccountSettings() {
         className="mt-text-sm flex h-auto w-full items-center gap-2 rounded-xl p-2 text-sm transition-all duration-200 ease-in-out hover:bg-surface-hover aria-[expanded=true]:bg-surface-hover"
       >
         <div className="-ml-0.9 -mt-0.8 h-8 w-8 flex-shrink-0">
-          <div className="relative flex">
-            <Avatar user={user} size={32} />
+          <div className="relative flex items-center justify-center">
+            <RedHatLogo size={32} className="rounded-full" />
           </div>
         </div>
         <div
           className="mt-2 grow overflow-hidden text-ellipsis whitespace-nowrap text-left text-text-primary"
-          style={{ marginTop: '0', marginLeft: '0' }}
+          style={{ 
+            marginTop: '0', 
+            marginLeft: '0',
+            fontFamily: "'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif"
+          }}
         >
           {user?.name ?? user?.username ?? localize('com_nav_user')}
         </div>
@@ -44,9 +49,10 @@ function AccountSettings() {
         style={{
           transformOrigin: 'bottom',
           translate: '0 -4px',
+          fontFamily: "'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif",
         }}
       >
-        <div className="text-token-text-secondary ml-3 mr-2 py-2 text-sm" role="note">
+        <div className="text-token-text-secondary ml-3 mr-2 py-2 text-sm" role="note" style={{ fontFamily: "'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif" }}>
           {user?.email ?? localize('com_nav_user')}
         </div>
         <DropdownMenuSeparator />

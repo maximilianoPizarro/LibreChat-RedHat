@@ -27,6 +27,12 @@ export default defineConfig(({ command }) => ({
     esbuildOptions: {
       target: 'ES2022',
     },
+    // Include all peer dependencies from @librechat/client to ensure they're resolved
+    include: [
+      'framer-motion',
+      '@react-spring/web',
+      ...clientPeerDeps,
+    ],
   },
   
   esbuild: {
@@ -158,6 +164,34 @@ export default defineConfig(({ command }) => ({
       '$fonts': path.resolve(__dirname, 'public/fonts'),
       'micromark-extension-math': 'micromark-extension-llm-math',
     },
+    // Dedupe all peer dependencies from @librechat/client to ensure they resolve correctly
+    // Also dedupe all @radix-ui packages to avoid version conflicts
+    dedupe: [
+      'framer-motion',
+      '@react-spring/web',
+      ...clientPeerDeps,
+      // Dedupe all @radix-ui packages to avoid version conflicts
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-primitive',
+      '@radix-ui/react-collection',
+      '@radix-ui/react-context',
+      '@radix-ui/react-compose-refs',
+    ],
+  },
+  
+  // Force Vite to resolve @radix-ui packages from root node_modules to avoid nested version conflicts
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'ES2022',
+    },
+    include: [
+      'framer-motion',
+      '@react-spring/web',
+      ...clientPeerDeps,
+    ],
+    // Force resolution of nested @radix-ui dependencies
+    force: true,
   },
 }));
 

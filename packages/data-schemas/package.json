@@ -58,6 +58,9 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.0.4"
   },
+  "dependencies": {
+    "winston-daily-rotate-file": "^5.0.0"
+  },
   "peerDependencies": {
     "jsonwebtoken": "^9.0.2",
     "klona": "^2.0.6",
@@ -66,8 +69,7 @@
     "meilisearch": "^0.38.0",
     "mongoose": "^8.12.1",
     "nanoid": "^3.3.7",
-    "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston": "^3.17.0"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

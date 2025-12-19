@@ -144,8 +144,8 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
     >
       <div ref={contentRef} className="flex flex-col items-center gap-0 p-2">
         {/* Red Hat Logo */}
-        <div className="mb-6 animate-fadeIn">
-          <RedHatLogo size={48} className="opacity-90" />
+        <div className="mb-6 animate-fadeIn flex justify-center items-center" style={{ zIndex: 1, position: 'relative' }}>
+          <RedHatLogo size={48} className="opacity-100" style={{ zIndex: 1 }} />
         </div>
         <div
           className={`flex ${textHasMultipleLines ? 'flex-col' : 'flex-col md:flex-row'} items-center justify-center gap-2`}

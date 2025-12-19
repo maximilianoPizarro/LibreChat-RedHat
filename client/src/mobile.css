@@ -48,6 +48,12 @@
     transition: all 0.5s;
     pointer-events: none;
   }
+  
+  /* Ensure mobile nav header is above nav-mask */
+  .bg-token-main-surface-primary {
+    position: relative;
+    z-index: 70 !important;
+  }
 
   .nav-open-button {
     opacity: 0;

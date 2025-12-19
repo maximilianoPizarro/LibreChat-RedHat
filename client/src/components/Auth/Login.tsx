@@ -100,7 +100,7 @@ function Login() {
         />
       )}
       {startupConfig?.registrationEnabled === true && (
-        <p className="my-4 text-center text-sm font-light text-gray-700 dark:text-white">
+        <p className="my-4 text-center text-sm font-light text-gray-700 dark:text-white" style={{ fontFamily: "'Red Hat Text', 'Red Hat Display', sans-serif" }}>
           {' '}
           {localize('com_auth_no_account')}{' '}
           <a

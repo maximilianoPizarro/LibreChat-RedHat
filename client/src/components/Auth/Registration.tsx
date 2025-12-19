@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { Button } from '~/components/RHDS';
 import { ThemeContext, Spinner, isDark } from '@librechat/client';
@@ -37,6 +37,50 @@ const Registration: React.FC = () => {
 
   // only require captcha if we have a siteKey
   const requireCaptcha = Boolean(startupConfig?.turnstile?.siteKey);
+
+  // Force red color on button using shadow DOM access
+  useEffect(() => {
+    const forceRedButton = () => {
+      const button = document.querySelector('rh-button[data-testid="register-button"]') as any;
+      if (button) {
+        // Set CSS variables
+        button.style.setProperty('--rh-button-primary-background-color', '#EE0000', 'important');
+        button.style.setProperty('--rh-button-primary-border-color', '#EE0000', 'important');
+        button.style.setProperty('--rh-button-primary-hover-background-color', '#CC0000', 'important');
+        button.style.setProperty('--rh-button-primary-hover-border-color', '#CC0000', 'important');
+        
+        // Access shadow DOM and force red color
+        if (button.shadowRoot) {
+          const base = button.shadowRoot.querySelector('[part="base"]') || button.shadowRoot.querySelector('button');
+          if (base) {
+            base.style.setProperty('background-color', '#EE0000', 'important');
+            base.style.setProperty('border-color', '#EE0000', 'important');
+            base.style.setProperty('color', '#ffffff', 'important');
+          }
+        }
+      }
+    };
+    
+    // Try multiple times to ensure shadow DOM is ready
+    forceRedButton();
+    const timeout1 = setTimeout(forceRedButton, 50);
+    const timeout2 = setTimeout(forceRedButton, 200);
+    const timeout3 = setTimeout(forceRedButton, 500);
+    
+    // Also use MutationObserver to catch when button is added to DOM
+    const observer = new MutationObserver(() => {
+      forceRedButton();
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
+      observer.disconnect();
+    };
+  }, []);
 
   const registerUser = useRegisterUserMutation({
     onMutate: () => {
@@ -84,13 +128,13 @@ const Registration: React.FC = () => {
             validation,
           )}
           aria-invalid={!!errors[id]}
-          className="webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2.5 pt-3 text-text-primary duration-200 focus:border-green-500 focus:outline-none"
+          className="webkit-dark-styles transition-color peer w-full rounded-2xl border border-border-light bg-surface-primary px-3.5 pb-2.5 pt-3 text-text-primary duration-200 focus:border-red-600 focus:outline-none"
           placeholder=" "
           data-testid={id}
         />
         <label
           htmlFor={id}
-          className="absolute start-3 top-1.5 z-10 origin-[0] -translate-y-4 scale-75 transform bg-surface-primary px-2 text-sm text-text-secondary-alt duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-1.5 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-green-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
+          className="absolute start-3 top-1.5 z-10 origin-[0] -translate-y-4 scale-75 transform bg-surface-primary px-2 text-sm text-text-secondary-alt duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:scale-100 peer-focus:top-1.5 peer-focus:-translate-y-4 peer-focus:scale-75 peer-focus:px-2 peer-focus:text-red-600 dark:peer-focus:text-red-500 rtl:peer-focus:left-auto rtl:peer-focus:translate-x-1/4"
         >
           {localize(label)}
         </label>
@@ -210,20 +254,21 @@ const Registration: React.FC = () => {
                 }
                 type="submit"
                 aria-label="Submit registration"
-                variant="submit"
-                className="h-12 w-full rounded-2xl"
+                variant="primary"
+                className="h-12 w-full rounded-2xl redhat-red-button"
+                data-testid="register-button"
               >
                 {isSubmitting ? <Spinner /> : localize('com_auth_continue')}
               </Button>
             </div>
           </form>
 
-          <p className="my-4 text-center text-sm font-light text-gray-700 dark:text-white">
+          <p className="my-4 text-center text-sm font-light text-gray-700 dark:text-white" style={{ fontFamily: "'Red Hat Text', 'Red Hat Display', sans-serif" }}>
             {localize('com_auth_already_have_account')}{' '}
             <a
               href={loginPage()}
               aria-label="Login"
-              className="inline-flex p-1 text-sm font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+              className="inline-flex p-1 text-sm font-medium text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
               {localize('com_auth_login')}
             </a>

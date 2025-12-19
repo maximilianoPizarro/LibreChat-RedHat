@@ -105,7 +105,7 @@
 html {
   /* Red Hat Design System Typography - Apply to root */
   /* Use Red Hat Text for body text (< 18px) as per UX guidelines */
-  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
   font-size: var(--rh-font-size-body-text-md, 1rem);
   line-height: var(--rh-line-height-body-text-md, 1.5);
   color: var(--rh-color-text-primary, #151515);
@@ -113,8 +113,9 @@ html {
   /* Red Hat Design System Color Tokens */
   /* Using official RHDS tokens with fallbacks for compatibility */
   /* See: https://ux.redhat.com/get-started/developers/tokens/ */
+  /* OpenShift-like colors */
   --brand-purple: #ab68ff;
-  --presentation: var(--rh-color-surface-base, var(--white));
+  --presentation: #f0f0f0; /* OpenShift light background */
   
   /* Text colors - using RHDS tokens */
   --text-primary: var(--rh-color-text-primary, #151515);
@@ -187,8 +188,9 @@ html {
 }
 .dark {
   /* Red Hat Design System Color Tokens for Dark Mode */
+  /* OpenShift-like dark mode colors */
   --brand-purple: #ab68ff;
-  --presentation: var(--rh-color-surface-base-dark, #1f1f1f);
+  --presentation: #151515; /* OpenShift dark background */
   
   /* Text colors - using RHDS dark mode tokens */
   --text-primary: var(--rh-color-text-primary-on-dark, #ffffff);
@@ -403,7 +405,7 @@ html {
 }
 
 body {
-  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
   font-size: var(--rh-font-size-body-text-md, 1rem);
   line-height: var(--rh-line-height-body-text-md, 1.5);
   color: var(--rh-color-text-primary, #151515);
@@ -411,13 +413,16 @@ body {
 
 /* Apply Red Hat fonts to all text elements - use !important to override any conflicting styles */
 p, span, div, a, button, input, textarea, select, label, li, td, th, 
-article, section, aside, nav, header, footer, main {
-  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
+article, section, aside, nav, header, footer, main,
+.text-sm, .text-base, .text-lg, .text-xl, .text-2xl, .text-3xl,
+.font-light, .font-normal, .font-medium, .font-semibold, .font-bold,
+* {
+  font-family: 'Red Hat Text', 'Red Hat Display', RedHatText, RedHatDisplay, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
 }
 
 /* Override Tailwind font-sans utility to use Red Hat fonts */
 .font-sans {
-  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif) !important;
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
 }
 
 /* Apply Red Hat Display to headings */
@@ -426,7 +431,7 @@ article, section, aside, nav, header, footer, main {
 h1, h2, h3, h4, h5, h6,
 .heading,
 [class*="heading"] {
-  font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif);
+  font-family: 'Red Hat Display', RedHatDisplay, var(--rh-font-family-heading, 'Red Hat Display'), Helvetica, Arial, sans-serif !important;
   font-weight: var(--rh-font-weight-heading-md, 500);
   line-height: var(--rh-line-height-heading-md, 1.2);
   color: var(--rh-color-text-primary, #151515);
@@ -441,14 +446,14 @@ h1, h2, h3 {
 h4, h5, h6 {
   font-size: clamp(1rem, 1.2vw + 0.5rem, 1.5rem);
   /* If font-size < 18px, use Red Hat Text; otherwise Display */
-  font-family: var(--rh-font-family-body-text, RedHatText, 'Red Hat Text', Helvetica, Arial, sans-serif);
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
 }
 
 /* Force Display for h4+ when >= 18px */
 @media (min-width: 768px) {
   h4 {
     font-size: 1.125rem; /* 18px */
-    font-family: var(--rh-font-family-heading, RedHatDisplay, 'Red Hat Display', Helvetica, Arial, sans-serif);
+    font-family: 'Red Hat Display', RedHatDisplay, var(--rh-font-family-heading, 'Red Hat Display'), Helvetica, Arial, sans-serif !important;
   }
 }
 
@@ -1437,12 +1442,16 @@ button {
 .btn-primary {
   --tw-bg-opacity: 1;
   --tw-text-opacity: 1;
-  background-color: rgba(16, 163, 127, var(--tw-bg-opacity));
-  color: rgba(255, 255, 255, var(--tw-text-opacity));
+  /* Red Hat Brand Red */
+  background-color: #EE0000 !important;
+  border-color: #EE0000 !important;
+  color: rgba(255, 255, 255, var(--tw-text-opacity)) !important;
 }
 .btn-primary:hover {
   --tw-bg-opacity: 1;
-  background-color: rgba(26, 127, 100, var(--tw-bg-opacity));
+  /* Red Hat Brand Red - Darker on hover */
+  background-color: #CC0000 !important;
+  border-color: #CC0000 !important;
 }
 .btn-primary:focus {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
@@ -1456,18 +1465,22 @@ button {
     0 0 transparent;
   box-shadow:
     var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 transparent);
+  border-color: #EE0000 !important;
 }
 .btn-primary.focus-visible {
   --tw-ring-opacity: 1;
-  --tw-ring-color: rgba(25, 195, 125, var(--tw-ring-opacity));
+  --tw-ring-color: rgba(238, 0, 0, var(--tw-ring-opacity));
 }
 .btn-primary:focus-visible {
   --tw-ring-opacity: 1;
-  --tw-ring-color: rgba(25, 195, 125, var(--tw-ring-opacity));
+  --tw-ring-color: rgba(238, 0, 0, var(--tw-ring-opacity));
+  border-color: #EE0000 !important;
 }
 .btn-primary:disabled:hover {
   --tw-bg-opacity: 1;
-  background-color: rgba(16, 163, 127, var(--tw-bg-opacity));
+  background-color: #EE0000 !important;
+  border-color: #EE0000 !important;
+  opacity: 0.6;
 }
 .btn-secondary {
   --tw-border-opacity: 1;
@@ -1589,12 +1602,15 @@ button {
 body,
 html {
   height: 100%;
+  /* OpenShift-like background colors */
+  background-color: #f0f0f0;
 }
 
 .dark body,
 .dark html {
   --tw-bg-opacity: 1;
-  background-color: rgba(23, 23, 23, var(--tw-bg-opacity));
+  /* OpenShift dark mode background */
+  background-color: #151515;
 }
 
 #__next,
@@ -2699,6 +2715,16 @@ html {
   translate: 0 -0.5rem;
   margin-top: 4px;
   margin-right: -2px;
+  /* Red Hat Design System Typography */
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Apply Red Hat fonts to all text elements in popover */
+.popover-ui *,
+.popover-ui div,
+.popover-ui span,
+.popover-ui p {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
 }
 
 .popover-animate {
@@ -2736,6 +2762,11 @@ html {
   border-radius: 0.5rem;
   padding: 0.5rem;
   outline: none !important;
+  /* Red Hat Design System Typography */
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  line-height: var(--rh-line-height-body-text-sm, 1.5);
+  color: var(--rh-color-text-primary, var(--text-primary));
 }
 
 .select-item[aria-disabled='true'] {
@@ -2743,6 +2774,11 @@ html {
 }
 
 .select-item[data-active-item] {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.select-item:hover {
   background-color: var(--surface-hover);
   color: var(--text-primary);
 }
@@ -2983,6 +3019,65 @@ html {
   padding: 12px;
 }
 
+/* Red Hat Design System Button - Primary variant should be Red Hat red */
+rh-button[variant="primary"],
+rh-button[data-variant="primary"] {
+  --rh-button-primary-background-color: #EE0000 !important;
+  --rh-button-primary-border-color: #EE0000 !important;
+  --rh-button-primary-hover-background-color: #CC0000 !important;
+  --rh-button-primary-hover-border-color: #CC0000 !important;
+  --rh-button-primary-focus-background-color: #EE0000 !important;
+  --rh-button-primary-focus-border-color: #EE0000 !important;
+}
+
+/* Force red color on all primary buttons using shadow DOM parts */
+rh-button[variant="primary"]::part(base),
+rh-button[data-variant="primary"]::part(base) {
+  background-color: #EE0000 !important;
+  border-color: #EE0000 !important;
+  color: #ffffff !important;
+}
+
+rh-button[variant="primary"]:hover::part(base),
+rh-button[data-variant="primary"]:hover::part(base) {
+  background-color: #CC0000 !important;
+  border-color: #CC0000 !important;
+}
+
+/* Force red color using class selector */
+.redhat-red-button,
+rh-button.redhat-red-button,
+rh-button[data-testid="login-button"],
+rh-button[data-testid="register-button"],
+rh-button[variant="primary"][data-testid="register-button"],
+rh-button[variant="primary"].redhat-red-button {
+  --rh-button-primary-background-color: #EE0000 !important;
+  --rh-button-primary-border-color: #EE0000 !important;
+  --rh-button-primary-hover-background-color: #CC0000 !important;
+  --rh-button-primary-hover-border-color: #CC0000 !important;
+}
+
+.redhat-red-button::part(base),
+rh-button.redhat-red-button::part(base),
+rh-button[data-testid="login-button"]::part(base),
+rh-button[data-testid="register-button"]::part(base),
+rh-button[variant="primary"][data-testid="register-button"]::part(base),
+rh-button[variant="primary"].redhat-red-button::part(base) {
+  background-color: #EE0000 !important;
+  border-color: #EE0000 !important;
+  color: #ffffff !important;
+}
+
+.redhat-red-button:hover::part(base),
+rh-button.redhat-red-button:hover::part(base),
+rh-button[data-testid="login-button"]:hover::part(base),
+rh-button[data-testid="register-button"]:hover::part(base),
+rh-button[variant="primary"][data-testid="register-button"]:hover::part(base),
+rh-button[variant="primary"].redhat-red-button:hover::part(base) {
+  background-color: #CC0000 !important;
+  border-color: #CC0000 !important;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -2996,4 +3091,378 @@ html {
 
 .sharepoint-picker-bg {
   background-color: #f5f5f5;
+}
+
+/* Red Hat Navigation Bar Styles */
+.nav.active {
+  /* Red Hat Design System navigation background */
+  background-color: var(--rh-color-surface-base, #ffffff) !important;
+  border-right: 1px solid var(--rh-color-border-subtle-on-light, #d2d2d2);
+}
+
+.dark .nav.active {
+  background-color: var(--rh-color-surface-base-dark, #1f1f1f) !important;
+  border-right: 1px solid var(--rh-color-border-subtle-on-dark, #4d4d4d);
+}
+
+/* Navigation bar header - Red Hat style */
+#chat-history-nav > div.flex.flex-1.flex-col.overflow-hidden > div.flex.items-center.justify-between {
+  /* Red Hat navigation header styling */
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-light, #d2d2d2);
+  padding: 0.5rem 0.75rem;
+}
+
+.dark #chat-history-nav > div.flex.flex-1.flex-col.overflow-hidden > div.flex.items-center.justify-between {
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-dark, #4d4d4d);
+}
+
+/* Search bar input - Red Hat fonts */
+#chat-history-nav input[type="text"] {
+  font-family: 'Red Hat Text', 'Red Hat Display', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Navigation items - Red Hat fonts */
+#chat-history-nav,
+#chat-history-nav * {
+  font-family: 'Red Hat Text', 'Red Hat Display', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Red Hat Navigation Buttons - Red color for better visibility */
+#chat-history-nav rh-button.nav-button-red,
+#chat-history-nav rh-button[data-testid="close-sidebar-button"],
+#chat-history-nav rh-button[data-testid="nav-new-chat-button"],
+#chat-history-nav rh-button[variant="tertiary"],
+#chat-history-nav rh-button[variant="primary"] {
+  /* Red Hat red color for navigation buttons */
+  --rh-button-tertiary-color: var(--rh-color-text-primary, #151515);
+  --rh-button-tertiary-hover-background-color: rgba(238, 0, 0, 0.1);
+  --rh-button-tertiary-hover-color: #EE0000;
+  --rh-button-tertiary-focus-ring-color: #EE0000;
+  --rh-button-primary-color: var(--rh-color-text-primary, #151515);
+  --rh-button-primary-hover-background-color: rgba(238, 0, 0, 0.1);
+  --rh-button-primary-hover-color: #EE0000;
+  --rh-button-primary-focus-ring-color: #EE0000;
+  /* Fix button size */
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+}
+
+.dark #chat-history-nav rh-button.nav-button-red,
+.dark #chat-history-nav rh-button[data-testid="close-sidebar-button"],
+.dark #chat-history-nav rh-button[data-testid="nav-new-chat-button"],
+.dark #chat-history-nav rh-button[variant="tertiary"],
+.dark #chat-history-nav rh-button[variant="primary"] {
+  --rh-button-tertiary-color: var(--rh-color-text-primary-on-dark, #ffffff);
+  --rh-button-tertiary-hover-background-color: rgba(238, 0, 0, 0.2);
+  --rh-button-tertiary-hover-color: #ff3333;
+  --rh-button-tertiary-focus-ring-color: #ff3333;
+  --rh-button-primary-color: var(--rh-color-text-primary-on-dark, #ffffff);
+  --rh-button-primary-hover-background-color: rgba(238, 0, 0, 0.2);
+  --rh-button-primary-hover-color: #ff3333;
+  --rh-button-primary-focus-ring-color: #ff3333;
+}
+
+/* Improve button visibility in navigation - Red Hat red theme */
+#chat-history-nav rh-button.nav-button-red::part(base),
+#chat-history-nav rh-button[data-testid="close-sidebar-button"]::part(base),
+#chat-history-nav rh-button[data-testid="nav-new-chat-button"]::part(base),
+#chat-history-nav rh-button[variant="tertiary"]::part(base),
+#chat-history-nav rh-button[variant="primary"]::part(base) {
+  color: var(--rh-color-text-primary, #151515) !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  transition: all 0.2s ease-in-out !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  padding: 0.375rem !important;
+}
+
+#chat-history-nav rh-button.nav-button-red:hover::part(base),
+#chat-history-nav rh-button[data-testid="close-sidebar-button"]:hover::part(base),
+#chat-history-nav rh-button[data-testid="nav-new-chat-button"]:hover::part(base),
+#chat-history-nav rh-button[variant="tertiary"]:hover::part(base),
+#chat-history-nav rh-button[variant="primary"]:hover::part(base) {
+  background-color: rgba(238, 0, 0, 0.1) !important;
+  color: #EE0000 !important;
+  border-color: rgba(238, 0, 0, 0.3) !important;
+}
+
+#chat-history-nav rh-button.nav-button-red:focus-visible::part(base),
+#chat-history-nav rh-button[data-testid="close-sidebar-button"]:focus-visible::part(base),
+#chat-history-nav rh-button[data-testid="nav-new-chat-button"]:focus-visible::part(base),
+#chat-history-nav rh-button[variant="tertiary"]:focus-visible::part(base),
+#chat-history-nav rh-button[variant="primary"]:focus-visible::part(base) {
+  outline: 2px solid #EE0000 !important;
+  outline-offset: 2px !important;
+  background-color: rgba(238, 0, 0, 0.1) !important;
+}
+
+.dark #chat-history-nav rh-button.nav-button-red::part(base),
+.dark #chat-history-nav rh-button[data-testid="close-sidebar-button"]::part(base),
+.dark #chat-history-nav rh-button[data-testid="nav-new-chat-button"]::part(base),
+.dark #chat-history-nav rh-button[variant="tertiary"]::part(base),
+.dark #chat-history-nav rh-button[variant="primary"]::part(base) {
+  color: var(--rh-color-text-primary-on-dark, #ffffff) !important;
+}
+
+.dark #chat-history-nav rh-button.nav-button-red:hover::part(base),
+.dark #chat-history-nav rh-button[data-testid="close-sidebar-button"]:hover::part(base),
+.dark #chat-history-nav rh-button[data-testid="nav-new-chat-button"]:hover::part(base),
+.dark #chat-history-nav rh-button[variant="tertiary"]:hover::part(base),
+.dark #chat-history-nav rh-button[variant="primary"]:hover::part(base) {
+  background-color: rgba(238, 0, 0, 0.2) !important;
+  color: #ff3333 !important;
+  border-color: rgba(238, 0, 0, 0.4) !important;
+}
+
+.dark #chat-history-nav rh-button.nav-button-red:focus-visible::part(base),
+.dark #chat-history-nav rh-button[data-testid="close-sidebar-button"]:focus-visible::part(base),
+.dark #chat-history-nav rh-button[data-testid="nav-new-chat-button"]:focus-visible::part(base),
+.dark #chat-history-nav rh-button[variant="tertiary"]:focus-visible::part(base),
+.dark #chat-history-nav rh-button[variant="primary"]:focus-visible::part(base) {
+  outline: 2px solid #ff3333 !important;
+  outline-offset: 2px !important;
+  background-color: rgba(238, 0, 0, 0.2) !important;
+}
+
+/* Red Hat Logo - SVG doesn't need white background removal */
+.redhat-logo {
+  /* SVG already has transparent background, no blend mode needed */
+  background: transparent;
+  mix-blend-mode: normal;
+}
+
+/* Red Hat Design System - Sidebar (controls-nav) Styling */
+/* Apply Red Hat fonts and colors to the right sidebar */
+#controls-nav,
+#controls-nav *,
+nav#controls-nav,
+nav#controls-nav * {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Ensure all buttons in sidebar use Red Hat red */
+#controls-nav .btn-primary,
+#controls-nav button.btn-primary,
+#controls-nav .btn.btn-primary {
+  background-color: #EE0000 !important;
+  border-color: #EE0000 !important;
+  color: #ffffff !important;
+}
+
+#controls-nav .btn-primary:hover,
+#controls-nav button.btn-primary:hover,
+#controls-nav .btn.btn-primary:hover {
+  background-color: #CC0000 !important;
+  border-color: #CC0000 !important;
+}
+
+#controls-nav .btn-primary:focus,
+#controls-nav button.btn-primary:focus,
+#controls-nav .btn.btn-primary:focus {
+  border-color: #EE0000 !important;
+  outline-color: #EE0000 !important;
+}
+
+/* Override any green buttons in sidebar */
+#controls-nav button[class*="green"],
+#controls-nav .bg-green-500,
+#controls-nav .bg-green-600,
+#controls-nav .hover\:bg-green-600:hover,
+#controls-nav .hover\:bg-green-400:hover {
+  background-color: #EE0000 !important;
+  border-color: #EE0000 !important;
+}
+
+#controls-nav button[class*="green"]:hover,
+#controls-nav .bg-green-500:hover,
+#controls-nav .bg-green-600:hover {
+  background-color: #CC0000 !important;
+  border-color: #CC0000 !important;
+}
+
+/* Sidebar text elements use Red Hat fonts */
+#controls-nav label,
+#controls-nav span,
+#controls-nav div,
+#controls-nav p,
+#controls-nav input,
+#controls-nav select,
+#controls-nav textarea {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Sidebar headings use Red Hat Display */
+#controls-nav h1,
+#controls-nav h2,
+#controls-nav h3,
+#controls-nav h4,
+#controls-nav h5,
+#controls-nav h6 {
+  font-family: 'Red Hat Display', RedHatDisplay, var(--rh-font-family-heading, 'Red Hat Display'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Red Hat Design System - Account Settings Dropdown Menu */
+/* Apply Red Hat fonts to the account settings popover and all its elements */
+.popover-ui,
+.popover-ui *,
+.popover-ui div,
+.popover-ui span,
+.popover-ui p,
+.popover-ui button,
+.select-item,
+.select-item *,
+.select-item div,
+.select-item span {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Account settings button text */
+#chat-history-nav button[data-testid="nav-user"],
+#chat-history-nav button[data-testid="nav-user"] *,
+#chat-history-nav button[data-testid="nav-user"] div {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Red Hat Design System - Mobile Navigation Header */
+.bg-token-main-surface-primary,
+div[class*="bg-token-main-surface-primary"] {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+  background-color: var(--rh-color-surface-base, #ffffff) !important;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-light, #d2d2d2) !important;
+}
+
+.dark .bg-token-main-surface-primary,
+.dark div[class*="bg-token-main-surface-primary"] {
+  background-color: var(--rh-color-surface-base-dark, #1f1f1f) !important;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-dark, #4d4d4d) !important;
+  color: var(--rh-color-text-primary-on-dark, #ffffff) !important;
+}
+
+/* Mobile header buttons - Red Hat style */
+.bg-token-main-surface-primary button,
+div[class*="bg-token-main-surface-primary"] button {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+  color: var(--rh-color-text-primary, #151515) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.bg-token-main-surface-primary button:hover,
+div[class*="bg-token-main-surface-primary"] button:hover {
+  background-color: rgba(238, 0, 0, 0.1) !important;
+  color: #EE0000 !important;
+}
+
+.dark .bg-token-main-surface-primary button,
+.dark div[class*="bg-token-main-surface-primary"] button {
+  color: var(--rh-color-text-primary-on-dark, #ffffff) !important;
+}
+
+.dark .bg-token-main-surface-primary button:hover,
+.dark div[class*="bg-token-main-surface-primary"] button:hover {
+  background-color: rgba(238, 0, 0, 0.2) !important;
+  color: #ff3333 !important;
+}
+
+/* Main header - Red Hat style */
+.sticky.top-0.z-10,
+div[class*="sticky"][class*="top-0"] {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+  background-color: var(--rh-color-surface-base, #ffffff) !important;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-light, #d2d2d2) !important;
+  color: var(--rh-color-text-primary, #151515) !important;
+}
+
+.dark .sticky.top-0.z-10,
+.dark div[class*="sticky"][class*="top-0"] {
+  background-color: var(--rh-color-surface-base-dark, #1f1f1f) !important;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-dark, #4d4d4d) !important;
+  color: var(--rh-color-text-primary-on-dark, #ffffff) !important;
+}
+
+/* Header buttons - Red Hat red hover */
+.sticky.top-0.z-10 rh-button,
+div[class*="sticky"][class*="top-0"] rh-button,
+#open-sidebar-button {
+  --rh-button-outline-color: var(--rh-color-text-primary, #151515);
+  --rh-button-outline-hover-background-color: rgba(238, 0, 0, 0.1);
+  --rh-button-outline-hover-color: #EE0000;
+  --rh-button-outline-hover-border-color: rgba(238, 0, 0, 0.3);
+  --rh-button-outline-focus-ring-color: #EE0000;
+}
+
+.sticky.top-0.z-10 rh-button:hover::part(base),
+div[class*="sticky"][class*="top-0"] rh-button:hover::part(base),
+#open-sidebar-button:hover::part(base) {
+  background-color: rgba(238, 0, 0, 0.1) !important;
+  color: #EE0000 !important;
+  border-color: rgba(238, 0, 0, 0.3) !important;
+}
+
+.dark .sticky.top-0.z-10 rh-button:hover::part(base),
+.dark div[class*="sticky"][class*="top-0"] rh-button:hover::part(base),
+.dark #open-sidebar-button:hover::part(base) {
+  background-color: rgba(238, 0, 0, 0.2) !important;
+  color: #ff3333 !important;
+  border-color: rgba(238, 0, 0, 0.4) !important;
+}
+
+/* Navigation header container - Red Hat style */
+#chat-history-nav > div.flex.flex-1.flex-col.overflow-hidden > div.flex.items-center.justify-between {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+  background-color: var(--rh-color-surface-base, #ffffff) !important;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-light, #d2d2d2) !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.dark #chat-history-nav > div.flex.flex-1.flex-col.overflow-hidden > div.flex.items-center.justify-between {
+  background-color: var(--rh-color-surface-base-dark, #1f1f1f) !important;
+  border-bottom: 1px solid var(--rh-color-border-subtle-on-dark, #4d4d4d) !important;
+}
+
+/* Red Hat Design System - All navigation elements */
+/* Ensure all navigation text uses Red Hat fonts */
+#chat-history-nav,
+#chat-history-nav *,
+#chat-history-nav div,
+#chat-history-nav span,
+#chat-history-nav p,
+#chat-history-nav button,
+#chat-history-nav input,
+#chat-history-nav label {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Navigation header - Red Hat colors and fonts */
+#chat-history-nav > div.flex.flex-1.flex-col.overflow-hidden {
+  background-color: var(--rh-color-surface-base, #ffffff) !important;
+}
+
+.dark #chat-history-nav > div.flex.flex-1.flex-col.overflow-hidden {
+  background-color: var(--rh-color-surface-base-dark, #1f1f1f) !important;
+}
+
+/* All rh-button elements should use Red Hat styling */
+rh-button {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+}
+
+/* Ensure icons in buttons are properly sized */
+rh-button svg,
+rh-button .icon-md,
+rh-button .icon-sm {
+  width: 1rem !important;
+  height: 1rem !important;
+}
+
+/* Email and balance text in dropdown */
+.popover-ui .text-token-text-secondary,
+.popover-ui [role="note"] {
+  font-family: 'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif !important;
+  font-size: var(--rh-font-size-body-text-sm, 0.875rem);
+  line-height: var(--rh-line-height-body-text-sm, 1.5);
 }

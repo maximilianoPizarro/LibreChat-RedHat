@@ -3,32 +3,32 @@ import React from 'react';
 interface RedHatLogoProps {
   className?: string;
   size?: number;
+  style?: React.CSSProperties;
 }
 
 /**
  * Red Hat Logo Component
- * Official Red Hat logo - sombrero rojo
+ * Red Hat Shadowman logo - classic Red Hat icon
+ * Uses the official Shadowman image
  */
-export default function RedHatLogo({ className = '', size = 40 }: RedHatLogoProps) {
+export default function RedHatLogo({ className = '', size = 40, style }: RedHatLogoProps) {
+  // Logo from local assets - using logo.svg
+  const logoSrc = '/assets/logo.svg';
+  
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="Red Hat Logo"
-      role="img"
-    >
-      {/* Red Hat sombrero logo - simplified version */}
-      <path
-        d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
-        fill="#EE0000"
-        stroke="#EE0000"
-        strokeWidth="0.5"
-      />
-    </svg>
+    <img
+      src={logoSrc}
+      alt="Red Hat Logo"
+      className={`redhat-logo ${className}`}
+      style={{
+        width: size,
+        height: size,
+        display: 'block',
+        objectFit: 'contain',
+        imageRendering: 'auto',
+        ...style
+      }}
+    />
   );
 }
 

@@ -22,6 +22,7 @@ const Avatar: React.FC<AvatarProps> = ({
   const avatarSrc = useAvatar(user);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [redHatLogoError, setRedHatLogoError] = useState(false);
 
   const avatarSeed = useMemo(
     () => user?.avatar || user?.username || user?.email || '',
@@ -48,21 +49,52 @@ const Avatar: React.FC<AvatarProps> = ({
   }, []);
 
   const DefaultAvatar = useCallback(
-    () => (
-      <div
-        style={{
-          backgroundColor: 'rgb(121, 137, 255)',
-          width: `${size}px`,
-          height: `${size}px`,
-          boxShadow: 'rgba(240, 246, 252, 0.1) 0px 0px 0px 1px',
-        }}
-        className={`relative flex items-center justify-center rounded-full p-1 text-text-primary ${className}`}
-        aria-hidden="true"
-      >
-        <UserIcon />
-      </div>
-    ),
-    [size, className],
+    () => {
+      // Use Red Hat logo as default avatar from local assets
+      const redHatLogoSrc = '/assets/logo.svg';
+      
+      if (redHatLogoError) {
+        // Fallback to UserIcon if logo fails to load
+        return (
+          <div
+            style={{
+              backgroundColor: 'rgb(121, 137, 255)',
+              width: `${size}px`,
+              height: `${size}px`,
+              boxShadow: 'rgba(240, 246, 252, 0.1) 0px 0px 0px 1px',
+            }}
+            className={`relative flex items-center justify-center rounded-full p-1 text-text-primary ${className}`}
+            aria-hidden="true"
+          >
+            <UserIcon />
+          </div>
+        );
+      }
+      
+      return (
+        <div
+          style={{
+            width: `${size}px`,
+            height: `${size}px`,
+          }}
+          className={`relative flex items-center justify-center rounded-full ${className}`}
+          aria-hidden="true"
+        >
+          <img
+            src={redHatLogoSrc}
+            alt="Red Hat Logo"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              borderRadius: '50%',
+              objectFit: 'contain',
+            }}
+            onError={() => setRedHatLogoError(true)}
+          />
+        </div>
+      );
+    },
+    [size, className, redHatLogoError],
   );
 
   if (avatarSeed.length === 0 && showDefaultWhenEmpty) {

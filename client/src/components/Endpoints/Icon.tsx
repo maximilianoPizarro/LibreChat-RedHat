@@ -6,6 +6,7 @@ import MessageEndpointIcon from './MessageEndpointIcon';
 import { useAuthContext } from '~/hooks/AuthContext';
 import { useLocalize } from '~/hooks';
 import { cn } from '~/utils';
+import RedHatLogo from '~/components/RedHatLogo';
 
 type UserAvatarProps = {
   size: number;
@@ -25,14 +26,12 @@ const UserAvatar = memo(({ size, user, avatarSrc, username, className }: UserAva
   const renderDefaultAvatar = () => (
     <div
       style={{
-        backgroundColor: 'rgb(121, 137, 255)',
-        width: '20px',
-        height: '20px',
-        boxShadow: 'rgba(240, 246, 252, 0.1) 0px 0px 0px 1px',
+        width: size,
+        height: size,
       }}
-      className="relative flex h-9 w-9 items-center justify-center rounded-sm p-1 text-white"
+      className="relative flex items-center justify-center rounded-full"
     >
-      <UserIcon />
+      <RedHatLogo size={size} style={{ borderRadius: '50%' }} />
     </div>
   );
 

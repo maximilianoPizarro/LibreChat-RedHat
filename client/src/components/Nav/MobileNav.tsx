@@ -21,7 +21,15 @@ export default function MobileNav({
   const { title = 'New Chat' } = conversation || {};
 
   return (
-    <div className="bg-token-main-surface-primary sticky top-0 z-10 flex min-h-[40px] items-center justify-center bg-white pl-1 dark:bg-gray-800 dark:text-white md:hidden">
+    <div 
+      className="bg-token-main-surface-primary sticky top-0 z-[70] flex min-h-[40px] items-center justify-center bg-white pl-1 dark:bg-gray-800 dark:text-white md:hidden" 
+      style={{ 
+        position: 'relative',
+        fontFamily: "'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif",
+        backgroundColor: 'var(--rh-color-surface-base, #ffffff)',
+        borderBottom: '1px solid var(--rh-color-border-subtle-on-light, #d2d2d2)'
+      }}
+    >
       <button
         type="button"
         data-testid="mobile-header-new-chat-button"
@@ -30,6 +38,19 @@ export default function MobileNav({
         }
         aria-live="polite"
         className="m-1 inline-flex size-10 items-center justify-center rounded-full hover:bg-surface-hover"
+        style={{
+          fontFamily: "'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif",
+          color: 'var(--rh-color-text-primary, #151515)',
+          transition: 'all 0.2s ease-in-out'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(238, 0, 0, 0.1)';
+          e.currentTarget.style.color = '#EE0000';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.color = '';
+        }}
         onClick={() =>
           setNavVisible((prev) => {
             localStorage.setItem('navVisible', JSON.stringify(!prev));
@@ -56,13 +77,34 @@ export default function MobileNav({
           />
         </svg>
       </button>
-      <h1 className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-center text-sm font-normal">
+      <h1 
+        className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-center text-sm font-bold" 
+        style={{ 
+          fontFamily: "'Red Hat Display', RedHatDisplay, var(--rh-font-family-heading, 'Red Hat Display'), Helvetica, Arial, sans-serif", 
+          zIndex: 70,
+          color: 'var(--rh-color-text-primary, #151515)',
+          fontWeight: 700
+        }}
+      >
         {title ?? localize('com_ui_new_chat')}
       </h1>
       <button
         type="button"
         aria-label={localize('com_ui_new_chat')}
         className="m-1 inline-flex size-10 items-center justify-center rounded-full hover:bg-surface-hover"
+        style={{
+          fontFamily: "'Red Hat Text', RedHatText, var(--rh-font-family-body-text, 'Red Hat Text'), Helvetica, Arial, sans-serif",
+          color: 'var(--rh-color-text-primary, #151515)',
+          transition: 'all 0.2s ease-in-out'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'rgba(238, 0, 0, 0.1)';
+          e.currentTarget.style.color = '#EE0000';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.color = '';
+        }}
         onClick={() => {
           clearMessagesCache(queryClient, conversation?.conversationId);
           queryClient.invalidateQueries([QueryKeys.messages]);
