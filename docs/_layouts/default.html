@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title %}{{ page.title }} | {% endif %}{{ site.title }}</title>
+    <meta name="description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ site.baseurl }}/favicon.ico">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+    <meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
+    <meta property="og:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+    <meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/redhat-chat.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+    <meta property="twitter:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
+    <meta property="twitter:description" content="{% if page.description %}{{ page.description }}{% else %}{{ site.description }}{% endif %}">
+    <meta property="twitter:image" content="{{ site.url }}{{ site.baseurl }}/redhat-chat.png">
+    
+    <!-- Red Hat Design System CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@redhat/ux-red-hat-design-system@4.0.0/dist/css/rhds.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ site.baseurl }}/assets/css/main.css">
+    
+    <!-- Custom styles -->
+    <style>
+        :root {
+            --rh-color-brand-red-on-white: #CC0000;
+            --rh-color-brand-red-on-dark: #EE0000;
+        }
+        
+        body {
+            font-family: 'Red Hat Text', 'Overpass', 'Overpass', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background-color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+            font-size: 20px;
+        }
+        
+        .rh-site-header {
+            background-color: #151515;
+            color: #ffffff;
+            padding: 1.5rem 0;
+            border-bottom: 3px solid var(--rh-color-brand-red-on-white);
+        }
+        
+        .rh-site-header__container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+        
+        .rh-site-header__logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: #ffffff;
+        }
+        
+        .rh-site-header__logo svg {
+            flex-shrink: 0;
+        }
+        
+        .rh-site-header__title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin: 0;
+            font-family: 'Red Hat Text', sans-serif;
+            line-height: 1.2;
+        }
+        
+        .rh-site-header__subtitle {
+            font-size: 1.125rem;
+            font-weight: 400;
+            margin: 0.5rem 0 0 0;
+            opacity: 0.85;
+            font-family: 'Red Hat Text', sans-serif;
+            max-width: 800px;
+            line-height: 1.5;
+            color: #e0e0e0;
+        }
+        
+        .rh-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        .rh-content {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            text-align: left;
+        }
+        
+        .rh-content h1 {
+            color: var(--rh-color-brand-red-on-white);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 3px solid var(--rh-color-brand-red-on-white);
+            padding-bottom: 0.625rem;
+            font-family: 'Red Hat Text', sans-serif;
+        }
+        
+        .rh-content h2 {
+            color: #ffffff;
+            font-size: 1.875rem;
+            font-weight: 600;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            font-family: 'Red Hat Text', sans-serif;
+        }
+        
+        .rh-content h3 {
+            color: #ffffff;
+            font-size: 1.5625rem;
+            font-weight: 600;
+            margin-top: 1.875rem;
+            margin-bottom: 0.9375rem;
+            font-family: 'Red Hat Text', sans-serif;
+        }
+        
+        .rh-content h4,
+        .rh-content h5,
+        .rh-content h6 {
+            color: #ffffff;
+            font-weight: 600;
+            margin-top: 1.875rem;
+            margin-bottom: 0.9375rem;
+            font-family: 'Red Hat Text', sans-serif;
+        }
+        
+        .rh-content code {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            padding: 0.25em 0.5em;
+            border-radius: 3px;
+            font-family: 'Red Hat Mono', 'Overpass Mono', monospace;
+            font-size: 0.95em;
+        }
+        
+        .rh-content pre {
+            background-color: #151515;
+            color: #ffffff;
+            padding: 1.25rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            border-left: 4px solid var(--rh-color-brand-red-on-white);
+            margin: 1.875rem 0;
+            font-size: 0.9em;
+            position: relative;
+        }
+        
+        .rh-content pre code {
+            background-color: transparent;
+            color: #ffffff;
+            padding: 0;
+            font-size: 0.95em;
+        }
+        
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-family: 'Red Hat Text', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-button:hover {
+            background-color: var(--rh-color-brand-red-on-white);
+            color: #ffffff;
+            border-color: var(--rh-color-brand-red-on-white);
+        }
+        
+        .copy-button:active {
+            transform: scale(0.95);
+        }
+        
+        .copy-button.copied {
+            background-color: #28a745;
+            border-color: #28a745;
+            color: #ffffff;
+        }
+        
+        .rh-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            margin: 1.875rem auto;
+            border: 1px solid #404040;
+            display: block;
+        }
+        
+        .rh-content img[alt*="badge"],
+        .rh-content p[align="left"] img {
+            box-shadow: none;
+            border: none;
+            margin: 0.25rem;
+            display: inline-block;
+        }
+        
+        .rh-content p[align="left"] {
+            text-align: left;
+            margin: 1.875rem 0;
+        }
+        
+        .rh-content a {
+            color: var(--rh-color-brand-red-on-dark);
+            text-decoration: none;
+        }
+        
+        .rh-content a:hover {
+            color: var(--rh-color-brand-red-on-white);
+            text-decoration: underline;
+        }
+        
+        .rh-content ul,
+        .rh-content ol {
+            margin: 1.25rem 0;
+            padding-left: 2.5rem;
+        }
+        
+        .rh-content li {
+            margin: 0.625rem 0;
+        }
+        
+        .rh-content blockquote {
+            border-left: 4px solid var(--rh-color-brand-red-on-white);
+            padding-left: 1.25rem;
+            margin: 1.875rem 0;
+            color: #b0b0b0;
+            font-style: italic;
+        }
+        
+        .rh-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.875rem 0;
+        }
+        
+        .rh-content table th,
+        .rh-content table td {
+            padding: 0.9375rem;
+            border: 1px solid #404040;
+            font-size: 1em;
+        }
+        
+        .rh-content table th {
+            background-color: #2d2d2d;
+            color: var(--rh-color-brand-red-on-white);
+            font-weight: 600;
+        }
+        
+        .rh-content table tr:nth-child(even) {
+            background-color: #252525;
+        }
+        
+        .rh-content div[align="center"] {
+            text-align: center;
+            margin: 1.875rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .rh-content div[align="center"] img {
+            margin: 1.875rem auto;
+            display: block;
+            max-width: 100%;
+            width: auto;
+            height: auto;
+        }
+        
+        .rh-content div[align="center"] img[width="900"] {
+            max-width: min(900px, 100%);
+            width: 100%;
+            height: auto;
+        }
+        
+        .rh-content iframe {
+            max-width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .rh-footer {
+            background-color: #151515;
+            color: #ffffff;
+            padding: 2rem 1rem;
+            margin-top: 4rem;
+            text-align: center;
+            border-top: 1px solid #404040;
+        }
+        
+        .rh-footer__links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        
+        .rh-footer__links a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        
+        .rh-footer__links a:hover {
+            color: var(--rh-color-brand-red-on-white);
+        }
+        
+        @media (max-width: 768px) {
+            .rh-main {
+                padding: 1rem;
+            }
+            
+            .rh-content h1 {
+                font-size: 1.75rem;
+            }
+            
+            .rh-content h2 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+    
+    <!-- Feed -->
+    {% if site.plugins contains 'jekyll-feed' %}
+    {% feed_meta %}
+    {% endif %}
+</head>
+<body>
+    <header class="rh-site-header">
+        <div class="rh-site-header__container">
+            <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                <svg width="48" height="48" viewBox="0 0 192.3 146" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+                    <path d="M96.15 0L0 36.5v73L96.15 146l96.15-36.5v-73L96.15 0z" fill="#CC0000"/>
+                    <text x="96.15" y="80" font-family="Arial" font-size="40" font-weight="bold" fill="white" text-anchor="middle">R</text>
+                </svg>
+                <div>
+                    <a href="{{ site.baseurl }}/" class="rh-site-header__logo" style="text-decoration: none;">
+                        <h1 class="rh-site-header__title">Red Hat Chat</h1>
+                    </a>
+                    <p class="rh-site-header__subtitle">AI Conversations with Red Hat Design System - Deploy locally with Podman or on OpenShift using container images from Quay.io</p>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="rh-main">
+        <div class="rh-content">
+            {{ content }}
+        </div>
+    </main>
+    
+    <footer class="rh-footer">
+        <div class="rh-footer__links">
+            <a href="{{ site.social.github }}">GitHub Repository</a>
+            <a href="{{ site.social.quay }}">Quay.io Container Registry</a>
+            <a href="https://www.linkedin.com/in/{{ site.author.linkedin }}">LinkedIn</a>
+        </div>
+        <p>Content written by <strong>{{ site.author.name }}</strong> - {{ site.author.role }}</p>
+        <p>&copy; {{ 'now' | date: "%Y" }} Red Hat, Inc. | Built with Red Hat Design System</p>
+    </footer>
+    
+    <!-- Red Hat Design System JS -->
+    <script src="https://unpkg.com/@redhat/ux-red-hat-design-system@4.0.0/dist/js/rhds.min.js"></script>
+    
+    <!-- Copy to Clipboard Functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const preElements = document.querySelectorAll('.rh-content pre');
+            
+            preElements.forEach(function(pre) {
+                const copyButton = document.createElement('button');
+                copyButton.className = 'copy-button';
+                copyButton.textContent = 'Copy';
+                copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+                
+                copyButton.addEventListener('click', function() {
+                    const code = pre.querySelector('code');
+                    const textToCopy = code ? code.textContent : pre.textContent;
+                    
+                    navigator.clipboard.writeText(textToCopy).then(function() {
+                        copyButton.textContent = 'Copied!';
+                        copyButton.classList.add('copied');
+                        
+                        setTimeout(function() {
+                            copyButton.textContent = 'Copy';
+                            copyButton.classList.remove('copied');
+                        }, 2000);
+                    }).catch(function(err) {
+                        console.error('Failed to copy text: ', err);
+                        copyButton.textContent = 'Error';
+                        setTimeout(function() {
+                            copyButton.textContent = 'Copy';
+                        }, 2000);
+                    });
+                });
+                
+                pre.style.position = 'relative';
+                pre.appendChild(copyButton);
+            });
+        });
+    </script>
+</body>
+</html>
+

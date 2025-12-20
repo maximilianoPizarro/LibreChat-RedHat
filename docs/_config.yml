@@ -1,0 +1,52 @@
+# Site Configuration for Red Hat Chat Documentation
+title: Red Hat Chat
+description: Deploy Red Hat Chat locally with Podman or on OpenShift using container images from Quay.io. Powered by LibreChat with Red Hat Design System integration.
+baseurl: "" # the subpath of your site, e.g. /blog
+url: "" # the base hostname & protocol for your site
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Theme settings
+theme: null
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+
+# Collections
+collections:
+  docs:
+    output: true
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+
+# Author information
+author:
+  name: "Maximiliano Pizarro"
+  role: "Specialist Solution Architect at Red Hat LATAM"
+  github: "maximilianoPizarro"
+  linkedin: "maximiliano-gregorio-pizarro-consultor-it"
+
+# Social links
+social:
+  github: "https://github.com/maximilianoPizarro/LibreChat-RedHat"
+  quay: "https://quay.io/repository/maximilianopizarro/redhat-chat"
+  linkedin: "https://www.linkedin.com/in/maximiliano-gregorio-pizarro-consultor-it"
+
