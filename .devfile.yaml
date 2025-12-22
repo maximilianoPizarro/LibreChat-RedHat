@@ -44,14 +44,8 @@ components:
           value: http://localhost:3080
         - name: MONGO_URI
           value: mongodb://127.0.0.1:27017/LibreChat
-        - name: MEILI_HOST
-          value: http://127.0.0.1:7700
-        - name: MEILI_MASTER_KEY
-          value: librechat
-        - name: MEILI_NO_ANALYTICS
-          value: "true"
         - name: SEARCH
-          value: "true"
+          value: "false"
         # RAG API is optional - uncomment vectordb and rag-api components to enable
         # - name: RAG_API_URL
         #   value: http://rag-api:8000
@@ -123,28 +117,6 @@ components:
       volumeMounts:
         - name: mongodb-data
           path: /data/db
-  - name: meilisearch
-    container:
-      image: docker.io/getmeili/meilisearch:v1.12.3
-      memoryLimit: 512Mi
-      endpoints:
-        - name: meilisearch
-          targetPort: 7700
-          exposure: public
-          protocol: http
-          path: /
-      env:
-        - name: MEILI_HOST
-          value: http://meilisearch:7700
-        - name: MEILI_ENV
-          value: development
-        - name: MEILI_NO_ANALYTICS
-          value: "true"
-        - name: MEILI_MASTER_KEY
-          value: librechat
-      volumeMounts:
-        - name: meili-data
-          path: /meili_data
   # Ollama component - commented out due to resource constraints
   # Uncomment when you have sufficient resources (4Gi+ memory available)
   #- name: ollama
@@ -219,9 +191,6 @@ components:
   - name: mongodb-data
     volume:
       size: 2Gi
-  - name: meili-data
-    volume:
-      size: 1Gi
   # pg-data volume for vectordb
   - name: pg-data
     volume:
@@ -283,20 +252,6 @@ commands:
           fi
           ATTEMPT=$((ATTEMPT + 1))
           [ $((ATTEMPT % 5)) -eq 0 ] && echo "  Waiting for MongoDB... ($ATTEMPT/$MAX_ATTEMPTS)"
-          sleep 1
-        done
-        
-        # Quick wait for Meilisearch (reduced attempts for dev mode)
-        echo "Waiting for Meilisearch..."
-        ATTEMPT=0
-        while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 7700 2>/dev/null; then
-            echo "✓ Meilisearch ready"
-            sleep 1
-            break
-          fi
-          ATTEMPT=$((ATTEMPT + 1))
-          [ $((ATTEMPT % 5)) -eq 0 ] && echo "  Waiting for Meilisearch... ($ATTEMPT/$MAX_ATTEMPTS)"
           sleep 1
         done
         
@@ -419,11 +374,9 @@ commands:
         if ! oc get secret redhat-chat-secrets -n $NAMESPACE &> /dev/null; then
           JWT_SECRET=$(openssl rand -hex 32)
           JWT_REFRESH_SECRET=$(openssl rand -hex 32)
-          MEILI_MASTER_KEY=$(openssl rand -hex 16)
           oc create secret generic redhat-chat-secrets \
             --from-literal=jwt-secret=$JWT_SECRET \
             --from-literal=jwt-refresh-secret=$JWT_REFRESH_SECRET \
-            --from-literal=meili-master-key=$MEILI_MASTER_KEY \
             -n $NAMESPACE
           echo "✓ Secrets created"
         else
