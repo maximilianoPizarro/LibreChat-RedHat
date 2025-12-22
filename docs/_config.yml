@@ -1,8 +1,8 @@
 # Site Configuration for Red Hat Chat Documentation
 title: Red Hat Chat
 description: Deploy Red Hat Chat locally with Podman or on OpenShift using container images from Quay.io. Powered by LibreChat with Red Hat Design System integration.
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site
+baseurl: "https://maximilianopizarro.github.io" # the subpath of your site, e.g. /blog
+url: "/LibreChat-RedHat" # the base hostname & protocol for your site
 
 # Build settings
 markdown: kramdown
@@ -13,6 +13,7 @@ plugins:
 
 # Theme settings
 theme: null
+plugins_dir: _plugins
 
 # Exclude from processing
 exclude:
