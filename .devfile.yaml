@@ -73,6 +73,11 @@ components:
           value: "true"
         - name: ALLOW_SOCIAL_LOGIN
           value: "true"
+        # Development mode settings
+        - name: DEBUG
+          value: "true"
+        - name: LOG_LEVEL
+          value: "debug"
         # OpenID/OAuth configuration (optional - uncomment and configure if needed)
         # - name: OPENID_LOGIN_ENABLED
         #   value: "true"
@@ -242,17 +247,21 @@ commands:
       component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
-        # Ensure all dependencies are installed first
-        echo "Installing/updating dependencies..."
-        npm install --legacy-peer-deps || npm install
-        # Clean and rebuild packages to ensure peer dependencies are resolved
-        echo "Cleaning previous builds..."
-        rm -rf packages/client/dist packages/data-provider/dist packages/api/dist packages/data-schemas/dist
-        # Build packages in correct order
+        echo "Building for production..."
+        npm install --legacy-peer-deps --workspaces || npm install --legacy-peer-deps || npm install
         echo "Building packages..."
         npm run build:packages
-        echo "Building client..."
+        echo "Building client (production)..."
         npm run build:client
+  - id: build-dev
+    exec:
+      component: api
+      commandLine: |
+        cd /projects/librechat-redhat || cd /projects || pwd
+        echo "Building packages for DEV mode..."
+        npm install --legacy-peer-deps --workspaces || true
+        npm run build:packages
+        echo "✓ Packages built (client uses dev server, no build needed)"
   - id: run-backend
     exec:
       component: api
@@ -264,373 +273,149 @@ commands:
           exit 1
         fi
         
-        # Wait for MongoDB to be ready
-        echo "Waiting for MongoDB to be ready..."
-        MAX_ATTEMPTS=30
+        # Quick wait for MongoDB (reduced attempts for dev mode)
+        echo "Waiting for MongoDB..."
+        MAX_ATTEMPTS=15
         ATTEMPT=0
         while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          # Try multiple methods to check MongoDB connectivity
           if (command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 27017 2>/dev/null) || \
-             (command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/127.0.0.1/27017" 2>/dev/null) || \
+             (command -v timeout >/dev/null 2>&1 && timeout 1 bash -c "echo > /dev/tcp/127.0.0.1/27017" 2>/dev/null) || \
              (command -v mongosh >/dev/null 2>&1 && mongosh --host 127.0.0.1 --port 27017 --eval "db.adminCommand('ping')" --quiet >/dev/null 2>&1); then
-            echo "✓ MongoDB is ready"
+            echo "✓ MongoDB ready"
             break
           fi
           ATTEMPT=$((ATTEMPT + 1))
-          echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: MongoDB not ready yet, waiting..."
-          sleep 2
+          [ $((ATTEMPT % 5)) -eq 0 ] && echo "  Waiting for MongoDB... ($ATTEMPT/$MAX_ATTEMPTS)"
+          sleep 1
         done
-        if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-          echo "⚠ Warning: MongoDB may not be ready after $MAX_ATTEMPTS attempts"
-          echo "  Checking MongoDB container status..."
-          echo "  You may need to check if the MongoDB container is running and listening on 0.0.0.0:27017"
-          echo "  Continuing anyway, but connection may fail..."
-        fi
         
-        # Wait for Meilisearch to be ready
-        echo "Waiting for Meilisearch to be ready..."
+        # Quick wait for Meilisearch (reduced attempts for dev mode)
+        echo "Waiting for Meilisearch..."
         ATTEMPT=0
-        MEILI_READY=false
         while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-          # Try multiple methods to check Meilisearch connectivity
-          # First check if port is open
-          PORT_OPEN=false
           if command -v nc >/dev/null 2>&1 && nc -z 127.0.0.1 7700 2>/dev/null; then
-            PORT_OPEN=true
-          elif command -v timeout >/dev/null 2>&1 && timeout 2 bash -c "echo > /dev/tcp/127.0.0.1/7700" 2>/dev/null; then
-            PORT_OPEN=true
+            echo "✓ Meilisearch ready"
+            sleep 1
+            break
           fi
-          
-          # If port is open, check if health endpoint responds
-          if [ "$PORT_OPEN" = true ]; then
-            if command -v curl >/dev/null 2>&1; then
-              # Check health endpoint with proper headers
-              # Try health check with master key first, then without
-              HEALTH_OK=false
-              if curl -s -f -H "Authorization: Bearer librechat" http://127.0.0.1:7700/health >/dev/null 2>&1; then
-                HEALTH_OK=true
-              elif curl -s -f http://127.0.0.1:7700/health >/dev/null 2>&1; then
-                HEALTH_OK=true
-              fi
-              
-              if [ "$HEALTH_OK" = true ]; then
-                MEILI_READY=true
-                echo "✓ Meilisearch is ready and responding"
-                # Give it extra time to fully initialize indexes and be ready for connections
-                echo "  Waiting additional 3 seconds for Meilisearch to fully initialize..."
-                sleep 3
-                break
-              fi
-            else
-              # If curl is not available but port is open, assume it's ready
-              MEILI_READY=true
-              echo "✓ Meilisearch port is open (health check unavailable)"
-              sleep 2
-              break
-            fi
-          fi
-          
           ATTEMPT=$((ATTEMPT + 1))
-          echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Meilisearch not ready yet, waiting..."
-          sleep 2
+          [ $((ATTEMPT % 5)) -eq 0 ] && echo "  Waiting for Meilisearch... ($ATTEMPT/$MAX_ATTEMPTS)"
+          sleep 1
         done
-        if [ "$MEILI_READY" = false ]; then
-          echo "⚠ Warning: Meilisearch may not be ready after $MAX_ATTEMPTS attempts"
-          echo "  Checking Meilisearch container status..."
-          echo "  You may need to check if the Meilisearch container is running"
-          echo "  Continuing anyway, but connection may fail..."
-          echo "  You can disable search by setting SEARCH=false in your environment"
-        fi
         
-        # Check and install dependencies
-        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ] || [ ! -d node_modules/winston-daily-rotate-file ] || [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
-          echo "Dependencies not fully installed. Installing now..."
+        # Quick dependency check (only if missing)
+        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
+          echo "Installing dependencies..."
           npm install --legacy-peer-deps --workspaces || npm install --legacy-peer-deps || npm install
-          if [ $? -ne 0 ]; then
-            echo "✗ Failed to install dependencies"
-            exit 1
-          fi
-          # Verify critical dependencies are installed
-          MISSING_CRITICAL=""
-          if [ ! -d node_modules/winston-daily-rotate-file ] && [ ! -d packages/data-schemas/node_modules/winston-daily-rotate-file ]; then
-            MISSING_CRITICAL="$MISSING_CRITICAL winston-daily-rotate-file"
-          fi
-          if [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
-            MISSING_CRITICAL="$MISSING_CRITICAL @opentelemetry/exporter-trace-otlp-http"
-          fi
-          if [ -n "$MISSING_CRITICAL" ]; then
-            echo "⚠ Some critical dependencies are missing: $MISSING_CRITICAL"
-            echo "Installing missing dependencies..."
-            # Install without --workspaces to avoid npm errors
-            for dep in $MISSING_CRITICAL; do
-              echo "  Installing $dep..."
-              npm install "$dep" --legacy-peer-deps --save || \
-              npm install "$dep" --legacy-peer-deps || \
-              npm install "$dep"
-            done
-          fi
         fi
         
-        # Check if .env file exists, create from example if missing
-        if [ ! -f .env ]; then
-          echo "⚠ .env file not found. Creating from env.example.podman..."
-          if [ -f env.example.podman ]; then
-            cp env.example.podman .env
-            echo "✓ .env file created from env.example.podman"
-            echo "⚠ Please update .env with your actual configuration values"
-          else
-            echo "⚠ env.example.podman not found. Please create .env manually"
-          fi
+        # Create .env if missing
+        if [ ! -f .env ] && [ -f env.example.podman ]; then
+          cp env.example.podman .env
+          echo "✓ .env created from env.example.podman"
         fi
         
-        # Check if packages are built
+        # Build packages only if missing (required for backend)
         if [ ! -f packages/data-schemas/dist/index.cjs ] || [ ! -f packages/data-provider/dist/index.cjs ]; then
-          echo "Packages not built. Building now..."
-          npm run build:packages || {
-            echo "⚠ Failed to build packages. Please run 'npm run build:packages' manually"
-            exit 1
-          }
+          echo "Building packages..."
+          npm run build:packages || echo "⚠ Package build failed, continuing anyway..."
         fi
         
-        # Check if client is built
-        if [ ! -f client/dist/index.html ]; then
-          echo "Client not built. Building now..."
-          echo "This may take a few minutes..."
-          cd client
-          npm run build || {
-            echo "⚠ Failed to build client from client directory"
-            cd ..
-            npm run build:client || {
-              echo "⚠ Failed to build client. Please run 'npm run build:client' manually"
-              echo "⚠ Continuing anyway, but the application may not work correctly..."
-            }
-          }
-          cd ..
-          # Verify the build was successful
-          if [ ! -f client/dist/index.html ]; then
-            echo "⚠ Warning: client/dist/index.html still not found after build attempt"
-            echo "⚠ The application may not work correctly. Please check build errors above."
-          else
-            echo "✓ Client built successfully"
-          fi
-        else
-          echo "✓ Client already built"
-        fi
-        
-        echo "Starting backend server..."
+        # In dev mode, skip client build - use dev server instead
+        echo "Starting backend in DEV mode (client will use dev server)..."
         npm run backend:dev
   - id: start-backend
     exec:
       component: api
       commandLine: |
         cd /projects/librechat-redhat || cd /projects || pwd
-        # Ensure Node.js is available
         if ! command -v node &> /dev/null; then
-          echo "Node.js not found. Please run 'devfile init-workspace-full' first to install Node.js"
+          echo "Node.js not found. Run 'devfile init-workspace-full' first"
           exit 1
         fi
-        if [ ! -d node_modules ] || [ ! -f node_modules/.bin/cross-env ]; then
-          echo "Dependencies not installed. Installing now..."
-          npm install --legacy-peer-deps || npm install
-        fi
+        # Quick start - minimal checks for dev mode
+        [ ! -d node_modules ] && npm install --legacy-peer-deps --workspaces || true
+        [ ! -f packages/data-schemas/dist/index.cjs ] && npm run build:packages || true
         npm run backend:dev
+  - id: start-frontend
+    exec:
+      component: api
+      commandLine: |
+        cd /projects/librechat-redhat || cd /projects || pwd
+        if ! command -v node &> /dev/null; then
+          echo "Node.js not found. Run 'devfile init-workspace-full' first"
+          exit 1
+        fi
+        echo "Starting frontend dev server..."
+        npm run frontend:dev
   - id: init-workspace
     exec:
       component: api
       commandLine: |
         echo "=========================================="
-        echo "Red Hat Chat Workspace Ready!"
+        echo "Red Hat Chat - DEV Mode"
         echo "=========================================="
         echo ""
-        echo "To initialize dependencies, run:"
-        echo "  devfile init-workspace-full"
+        echo "Quick Start:"
+        echo "  1. devfile init-workspace-full  # Install Node.js & dependencies"
+        echo "  2. devfile run-backend          # Start backend (dev mode)"
+        echo "  3. devfile start-frontend       # Start frontend (dev server)"
         echo ""
-        echo "To start the backend server, run:"
-        echo "  devfile run-backend"
-        echo ""
-        echo "To deploy to OpenShift, run:"
-        echo "  devfile deploy-setup"
-        echo "  devfile deploy-run"
-        echo "  devfile deploy-expose"
-        echo ""
-        echo "Current directory: $(pwd 2>/dev/null || echo '/projects')"
+        echo "Note: In DEV mode, frontend uses dev server (no build needed)"
+        echo "Current: $(pwd 2>/dev/null || echo '/projects')"
         echo "=========================================="
   - id: init-workspace-full
     exec:
       component: api
       commandLine: |
-        echo "Initializing workspace with Node.js..."
+        echo "Initializing workspace for DEV mode..."
         cd /projects/librechat-redhat || cd /projects || pwd
         
-        # Install Node.js if not available
+        # Install Node.js if not available (simplified for dev)
         if ! command -v node &> /dev/null; then
-          echo "Node.js not found. Installing Node.js 20..."
-          
+          echo "Installing Node.js 20..."
+          export NVM_DIR="$HOME/.nvm"
           if ! command -v nvm &> /dev/null; then
-            echo "Installing nvm (Node Version Manager)..."
-            export NVM_DIR="$HOME/.nvm"
             mkdir -p "$NVM_DIR"
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           fi
-          
-          # Load nvm if available
-          export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          
           if command -v nvm &> /dev/null; then
-            echo "Installing Node.js 20 using nvm..."
-            nvm install 20
-            nvm use 20
-            nvm alias default 20
-            echo "✓ Node.js installed successfully using nvm"
-          elif command -v dnf &> /dev/null; then
-            # Try dnf without sudo first (might work if container runs as root or has permissions)
-            echo "Trying dnf install (no sudo)..."
-            if dnf install -y nodejs npm 2>/dev/null; then
-              echo "✓ Node.js installed successfully via dnf"
-            else
-              echo "⚠ dnf install failed. Trying alternative: download Node.js binary..."
-              # Download and install Node.js binary directly (no root required)
-              NODE_VERSION="20.11.0"
-              ARCH="x64"
-              NODE_DISTRO="linux"
-              NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-${NODE_DISTRO}-${ARCH}.tar.xz"
-              
-              echo "Downloading Node.js ${NODE_VERSION}..."
-              cd /tmp
-              curl -fsSL "$NODE_URL" -o node.tar.xz || {
-                echo "✗ Failed to download Node.js"
-                echo "Please install Node.js manually or contact your administrator"
-                exit 1
-              }
-              
-              echo "Extracting Node.js..."
-              tar -xf node.tar.xz || {
-                echo "✗ Failed to extract Node.js"
-                exit 1
-              }
-              
-              echo "Installing Node.js to ~/.local..."
-              mkdir -p ~/.local
-              cp -r node-v${NODE_VERSION}-${NODE_DISTRO}-${ARCH}/* ~/.local/
-              rm -rf node-v${NODE_VERSION}-${NODE_DISTRO}-${ARCH} node.tar.xz
-              
-              # Add to PATH
-              export PATH="$HOME/.local/bin:$PATH"
-              echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-              echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.profile
-              
-              echo "✓ Node.js installed successfully to ~/.local"
-            fi
+            nvm install 20 && nvm use 20 && nvm alias default 20
+            echo "✓ Node.js installed"
+          elif command -v dnf &> /dev/null && dnf install -y nodejs npm 2>/dev/null; then
+            echo "✓ Node.js installed via dnf"
           else
-            echo "✗ Cannot install Node.js: neither nvm nor dnf available"
+            echo "⚠ Node.js installation failed. Please install manually."
             exit 1
           fi
         fi
         
-        # Verify Node.js is now available
         if ! command -v node &> /dev/null; then
-          echo "✗ Node.js installation failed or not in PATH"
-          echo "Please install Node.js manually"
+          echo "✗ Node.js not available"
           exit 1
         fi
         
-        # Check Node.js version
-        NODE_MAJOR=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-        if [ "$NODE_MAJOR" -lt 20 ]; then
-          echo "⚠ Warning: Node.js version is $NODE_MAJOR, but Node.js 20+ is recommended"
-          echo "Current version: $(node -v)"
-        else
-          echo "✓ Node.js version: $(node -v)"
-          echo "✓ npm version: $(npm -v)"
-        fi
+        echo "✓ Node.js: $(node -v), npm: $(npm -v)"
         
-        # Install dependencies
+        # Install dependencies (simplified for dev)
         if [ -f package.json ]; then
-          echo "Installing dependencies (this may take a few minutes)..."
-          # Try with legacy-peer-deps first, then without if it fails
-          # Use --workspaces to ensure all workspace dependencies are installed
-          if ! npm install --legacy-peer-deps --workspaces; then
-            echo "⚠ npm install --legacy-peer-deps --workspaces failed, trying without workspaces flag..."
-            if ! npm install --legacy-peer-deps; then
-              echo "⚠ npm install --legacy-peer-deps failed, trying without flag..."
-              npm install || {
-                echo "⚠ npm install had issues. You can retry manually with: npm install"
-                # Don't exit with error to allow workspace to start
-              }
-            fi
-          fi
+          echo "Installing dependencies..."
+          npm install --legacy-peer-deps --workspaces || npm install --legacy-peer-deps || npm install || echo "⚠ Some install issues, continuing..."
           
-          # Verify critical dependencies are installed
-          if [ -d node_modules ]; then
-            echo "✓ Dependencies installed successfully"
-            
-            # Check for critical missing dependencies (check in root and workspace packages)
-            MISSING_DEPS=""
-            if [ ! -d node_modules/winston-daily-rotate-file ] && [ ! -d packages/data-schemas/node_modules/winston-daily-rotate-file ]; then
-              MISSING_DEPS="$MISSING_DEPS winston-daily-rotate-file"
-            fi
-            if [ ! -f node_modules/.bin/cross-env ]; then
-              MISSING_DEPS="$MISSING_DEPS cross-env"
-            fi
-            if [ ! -d node_modules/@opentelemetry/exporter-trace-otlp-http ]; then
-              MISSING_DEPS="$MISSING_DEPS @opentelemetry/exporter-trace-otlp-http"
-            fi
-            
-            if [ -n "$MISSING_DEPS" ]; then
-              echo "⚠ Some dependencies are missing: $MISSING_DEPS"
-              echo "Reinstalling dependencies with workspaces..."
-              npm install --legacy-peer-deps --workspaces || npm install --legacy-peer-deps || npm install
-            fi
-            
-            # Build internal packages (required for backend to run)
-            echo "Building internal packages..."
-            npm run build:packages || {
-              echo "⚠ Package build had issues. You can retry manually with: npm run build:packages"
-              # Don't exit with error to allow workspace to start
-            }
-            echo "✓ Packages built successfully"
-          else
-            echo "✗ node_modules directory not found after installation"
-            echo "Please run 'npm install' manually"
-          fi
-        else
-          echo "⚠ package.json not found in $(pwd)"
-          echo "Workspace will start, but you may need to navigate to the correct directory"
-          # Don't exit with error to allow workspace to start
+          # Build packages (required for backend)
+          echo "Building packages..."
+          npm run build:packages || echo "⚠ Package build issues, you can retry later"
         fi
         
-        # Check if .env file exists, create from example if missing
-        if [ ! -f .env ]; then
-          echo "⚠ .env file not found. Creating from env.example.podman..."
-          if [ -f env.example.podman ]; then
-            cp env.example.podman .env
-            echo "✓ .env file created from env.example.podman"
-            echo "⚠ Please update .env with your actual configuration values (especially MEILI_MASTER_KEY, JWT_SECRET, etc.)"
-          else
-            echo "⚠ env.example.podman not found. Please create .env manually"
-          fi
-        else
-          echo "✓ .env file exists"
-        fi
+        # Create config files if missing
+        [ ! -f .env ] && [ -f env.example.podman ] && cp env.example.podman .env && echo "✓ .env created"
+        [ ! -f librechat.yaml ] && [ -f librechat.example.yaml ] && cp librechat.example.yaml librechat.yaml && echo "✓ librechat.yaml created"
         
-        # Check if librechat.yaml file exists, create from example if missing
-        if [ ! -f librechat.yaml ]; then
-          echo "⚠ librechat.yaml file not found. Creating from librechat.example.yaml..."
-          if [ -f librechat.example.yaml ]; then
-            cp librechat.example.yaml librechat.yaml
-            echo "✓ librechat.yaml file created from librechat.example.yaml"
-            echo "⚠ Please update librechat.yaml with your actual configuration values if needed"
-          else
-            echo "⚠ librechat.example.yaml not found. Please create librechat.yaml manually"
-          fi
-        else
-          echo "✓ librechat.yaml file exists"
-        fi
-        
-        echo "✓ Workspace initialization completed"
-        echo "Run 'devfile run-backend' to start the backend server"
+        echo "✓ Workspace ready for DEV mode"
+        echo "Run 'devfile run-backend' to start backend"
+        echo "Run 'devfile start-frontend' to start frontend dev server"
   - id: deploy-setup
     exec:
       component: api

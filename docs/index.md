@@ -11,13 +11,7 @@ description: Deploy Red Hat Chat locally with Podman or on OpenShift using conta
 <img src="https://img.shields.io/badge/Status-Tech--Preview-orange?style=for-the-badge" alt="Tech Preview" style="margin: 0 0.25rem;">
 <a href="https://github.com/maximilianoPizarro/LibreChat-RedHat"><img src="https://img.shields.io/badge/GitHub-%23121011.svg?style=for-the-badge&logo=github&logoColor=white" alt="github" style="margin: 0 0.25rem;" /></a>
 <a href="https://quay.io/repository/maximilianopizarro/redhat-chat"><img src="https://img.shields.io/badge/Quay.io-Repository-8B5CF6?style=for-the-badge&logo=quay&logoColor=white" alt="Quay.io" style="margin: 0 0.25rem;" /></a>
-</div>
-
-<div align="center" style="margin: 2rem 0;">
-  <h1>Red Hat Chat</h1>
-  <p style="font-size: 1.2rem; color: #666; margin-top: 0.5rem;">
-    <em>Powered by LibreChat with Red Hat Design System</em>
-  </p>
+<a href="https://workspaces.openshift.com/f?url=https://github.com/maximilianoPizarro/LibreChat-RedHat"><img src="https://img.shields.io/badge/Open%20in-Workspace-blue?style=for-the-badge&logo=openshift&logoColor=white" alt="Open in Workspace" style="margin: 0 0.25rem;" /></a>
 </div>
 
 <div align="center" style="margin: 2rem 0;">
