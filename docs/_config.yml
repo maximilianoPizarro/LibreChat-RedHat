@@ -15,6 +15,17 @@ plugins:
 theme: null
 plugins_dir: _plugins
 
+# Include static files
+include:
+  - welcome.png
+  - favicon.ico
+  - podman.png
+  - login.png
+  - register.png
+  - librechat-helm-chart.png
+  - podman_llama_stack.png
+  - logo.svg
+
 # Exclude from processing
 exclude:
   - Gemfile
