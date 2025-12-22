@@ -103,11 +103,8 @@ components:
           path: /app/api/logs
       sourceMapping: /
       command:
-        - /bin/sh
-        - -c
-        - |
-          # Keep container running
-          tail -f /dev/null
+        - sleep
+        - infinity
   # nodejs component - let parent handle it completely, we don't override
   # The parent will provide Node.js configuration
   - name: mongodb
@@ -352,18 +349,9 @@ commands:
     exec:
       component: api
       commandLine: |
-        echo "=========================================="
-        echo "Red Hat Chat - DEV Mode"
-        echo "=========================================="
-        echo ""
-        echo "Quick Start:"
-        echo "  1. devfile init-workspace-full  # Install Node.js & dependencies"
-        echo "  2. devfile run-backend          # Start backend (dev mode)"
-        echo "  3. devfile start-frontend       # Start frontend (dev server)"
-        echo ""
-        echo "Note: In DEV mode, frontend uses dev server (no build needed)"
-        echo "Current: $(pwd 2>/dev/null || echo '/projects')"
-        echo "=========================================="
+        echo "Red Hat Chat - DEV Mode Ready"
+        echo "Run: devfile init-workspace-full"
+        echo "Then: devfile run-backend"
   - id: init-workspace-full
     exec:
       component: api
@@ -569,19 +557,8 @@ commands:
     exec:
       component: api
       commandLine: |
-        cd /projects/librechat-redhat || cd /projects || pwd
-        if [ -f continue-config.json ]; then
-          echo "Copying Continue configuration..."
-          mkdir -p /home/user/.continue
-          cp continue-config.json /home/user/.continue/config.json
-          echo "✓ Continue configuration copied to /home/user/.continue/config.json"
-        else
-          echo "⚠ continue-config.json not found, skipping Continue configuration"
-        fi
+        [ -f continue-config.json ] && mkdir -p /home/user/.continue && cp continue-config.json /home/user/.continue/config.json 2>/dev/null || true
 events:
   postStart:
     - init-workspace
-    # Ollama model downloads - commented out due to resource constraints
-    #- pull-ollama-model
-    #- pull-autocomplete-model
     - copy-continue-config
