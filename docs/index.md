@@ -234,6 +234,11 @@ This section explains how to deploy Red Hat Chat on OpenShift using the containe
 
 > **💡 Tip:** The Helm chart for Red Hat Chat (LibreChat) is **pre-installed** in many OpenShift clusters and can be found in the OpenShift Developer Catalog under "Helm Charts". For comprehensive Helm chart documentation, advanced configuration, and deployment strategies, visit [**Red Hat Chat Helm Chart Documentation**](https://maximilianopizarro.github.io/librechat/).
 
+<div align="center">
+  <img src="librechat-helm-chart.png" width="900" alt="Red Hat Chat Helm Chart available in OpenShift Developer Catalog"/>
+  <p style="color: #888; font-size: 0.9rem; margin-top: 0.5rem;">The Helm chart for Red Hat Chat (LibreChat) is available in the OpenShift Developer Catalog under "Helm Charts"</p>
+</div>
+
 ### Prerequisites
 
 - Access to an OpenShift cluster (4.x or later)
@@ -405,6 +410,11 @@ The project includes a Helm chart for easier deployment. **Note:** The Helm char
    - Navigate to **Developer** perspective
    - Click on **+Add** → **Helm Charts**
    - Search for "librechat" or "redhat-chat"
+
+<div align="center">
+  <img src="librechat-helm-chart.png" width="900" alt="Red Hat Chat Helm Chart in OpenShift Developer Catalog"/>
+  <p style="color: #888; font-size: 0.9rem; margin-top: 0.5rem;">The Helm chart for Red Hat Chat (LibreChat) is available in the OpenShift Developer Catalog</p>
+</div>
 
 2. **Install from Catalog:**
    - Select the Helm chart from the catalog
