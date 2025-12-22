@@ -97,8 +97,10 @@ components:
           path: /app/api/logs
       sourceMapping: /
       command:
-        - sleep
-        - infinity
+        - /bin/sh
+        - -c
+        - |
+          exec tail -f /dev/null
   # nodejs component - let parent handle it completely, we don't override
   # The parent will provide Node.js configuration
   - name: mongodb
@@ -304,9 +306,9 @@ commands:
     exec:
       component: api
       commandLine: |
-        echo "Red Hat Chat - DEV Mode Ready"
-        echo "Run: devfile init-workspace-full"
-        echo "Then: devfile run-backend"
+        echo "Red Hat Chat - DEV Mode Ready" || true
+        echo "Run: devfile init-workspace-full" || true
+        echo "Then: devfile run-backend" || true
   - id: init-workspace-full
     exec:
       component: api
