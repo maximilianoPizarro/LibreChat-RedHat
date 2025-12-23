@@ -97,8 +97,13 @@ components:
           path: /app/api/logs
       sourceMapping: /
       command:
-        - sleep
-        - infinity
+        - /bin/sh
+        - -c
+        - |
+          echo "Red Hat Chat workspace container starting..."
+          sleep 2
+          echo "Container ready - waiting for commands"
+          tail -f /dev/null
   # nodejs component - let parent handle it completely, we don't override
   # The parent will provide Node.js configuration
   - name: mongodb
