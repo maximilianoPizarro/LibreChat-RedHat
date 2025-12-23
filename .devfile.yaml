@@ -100,7 +100,17 @@ components:
         - /bin/sh
         - -c
         - |
-          exec tail -f /dev/null
+          echo "=========================================="
+          echo "Red Hat Chat API Container Started"
+          echo "=========================================="
+          echo "Container is ready and waiting for commands"
+          echo "Run 'devfile init-workspace-full' to initialize"
+          echo "Run 'devfile run-backend' to start the backend"
+          echo "=========================================="
+          while true; do
+            sleep 300
+            echo "[$(date)] Container is running..."
+          done
   # nodejs component - let parent handle it completely, we don't override
   # The parent will provide Node.js configuration
   - name: mongodb
