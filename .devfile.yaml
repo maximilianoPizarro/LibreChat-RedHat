@@ -18,7 +18,7 @@ components:
   # Uses base developer image (includes oc, kubectl) - Node.js will be installed via init-workspace-full
   - name: api
     container:
-      image: registry.redhat.io/devspaces/udi-rhel9:3.25
+      image: quay.io/devfile/universal-developer-image:ubi9-latest
       memoryLimit: 4Gi
       cpuLimit: 2000m
       cpuRequest: 500m
